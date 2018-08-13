@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /cms/
+Disallow: /temp/
+Disallow: /docs/
+Disallow: /pics/
+Disallow: /uploads/
+Sitemap: /sitemap.xml

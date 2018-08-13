@@ -1,0 +1,43 @@
+Priority,Difficulty,Owner,Feature
+,Medium,,Allow custom lightbox sizes.  Reduce size of login modal
+,Minor,,Force https to http
+,Minor,,"Accept Bitcoin.  Switch to Tilt: three advantages, “recurring monthly” donations, no need for a shipping address, and ability to put in a custom amount.  Its disadvantage is the switching cost, requires zip code, and you can’t pre-program an amount to give."
+,Medium,,Show Update Donor Agreement Checkbox for Donee upon making first donation
+,Medium,,Allison: move JS to end of body to improve page load speed
+,Minor,,NPR: remove wp-admin toolbar to prevent from entering Cloud Flare's cache
+,Minor,,Deane: Make dropdown & required error on confirm donation more prominent
+,Complete,,Investigate COUNT discrepancies for local host donations (# of users?)
+,Medium,,OR: Print label for prepackaged
+,Medium,,Upload faxed coversheet to replace label
+,Minor,,OR 25% barcode failure
+,Minor,,Allow decimal quantities
+,Complete,,Save quantity returns to search box
+,Complete,,Initial 00/00/0000 in Exp Box
+,Minor,,Manufacturer in universal search (and box) in vase of missing NDC
+,Minor,,Extraneous Registration Failure Email
+,Minor,,Revise Admin/item upload buttons to be hidden
+,Minor,,Top Nav disappear on narrow desktops 
+,Minor,,Donation/start should have count of how many donations have previously gone to each donee
+,Minor,,Use sirum.org css/js instead of local copy
+,Minor,,Fix or Remove Org Search in Admin
+,Minor,,Pricing Discussion.  Track multiple prices?  Which one?  Update historically?
+,Minor,,Make sure state of license matches registration address's state
+,Minor,,Show Update Donor Agreement Checkbox for Donee upon making first donation
+,Medium,,Search should use GET not POST.  Remove flash functionality from result helper?
+,Medium,,Donation/start button should honor the current inventory's search params
+,Medium,,Automated monthly? Email to remind them about a donation and ask if they need anything
+,Medium,,Proxy image through https with /imageserver?url=http://otherdomain.com/someimage.jpg
+,Medium,,3 step sign-up: 1) Select State 2) Select Org from DPH list 3) Fill/fix remaining data
+,Medium,,"FedEx signature proof of delivery (use this to ""sign"" disposition records?)"
+,Medium,,Destroy checkboxes checked on donation/add if item not requested
+,Medium,,Admin Queries to view all Inventory and/or requests
+,Medium,,"Inconsistent Imprints in labels.fda.gov NDC:35356-317(NDC:0002-4115), Missing Scheduled Drugs"
+,Medium,,Make registration lightbox not accidentally closeable
+,Medium,,Test CSV Upload of NDC & Qty to maintain live inventory
+,Major,,Allow Publishing of formulary and/or inventory on public website (Group by Pill Form then strength)
+,Major,,Mobile App (waiting for angular 2)
+,Major,,Allow printing of online formulary by group drugs by form & active ing
+,Major,,Multiple FedEx Account # for States & Donee Boxes
+,Major,,Move to Faxable Shipping Labels with 1D Barcodes (valuable for mobile)
+,Major x2,,"Deprecate Codeigniter, refactor site into new framework"
+,Major x4,,"Pharmacy Integration  with EDI (QS1, McKesson, Willow, HBS)"

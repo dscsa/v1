@@ -1,0 +1,190 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1138
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\margl1440\margr1440\vieww9000\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 /*\
+| ---------------------------------\
+|  Code for the Controller\
+| ---------------------------------\
+|\
+| Description of the code here\
+|\
+*/\
+function function_name($parameters)\
+\{\
+	$this->login_model->check_login();\
+	\
+	if ($this->form_validation->run('function_name'))\
+	\{\
+		$this->_function_name($parameters);\
+	\}\
+\
+	// read database for the view\
+	$data = $this->model->show_function_name($parameters);\
+	\
+	$this->load->view('function_name', $data);\
+\}\
+\
+function _function_name($parameters)\
+\{\
+	// database changes for success\
+	\
+	// inserts new record into tables\
+	if ($parameters == 'create')\
+	\{\
+		$this->model->create_function_name($parameters);\
+		$message = $this->lang->line('created_function_name');\
+	\}\
+\
+	// updates existing record.  can be used to \
+	// delete by changing archived field to 1\
+	if ($parameters == 'update)\
+	\{\
+		$this->model->update_function_name($parameters);\
+		$message = $this->lang->line('updated_function_name');\
+	\}\
+\
+	// emails & messages to be sent\
+	$this->model->send_message($message, $parameters);\
+	$this->model->send_email($message, $parameters);\
+	flash_data($message, 'success');\
+\
+	redirect(\'85);\
+\}\
+\
+/*\
+| ---------------------------------\
+|  Code for the Model\
+| ---------------------------------\
+|\
+| Description of the code here\
+| Prefixes follow the Create/List/Update\
+| The prefix show/get is inferred if no prefix \
+| is given.\
+|\
+*/\
+\
+function list_function_name($parameters)\
+\{\
+	$query = $this->_list_function_name;\
+	\
+	foreach ($query as $index => $row)\
+	\{\
+		//modify as needed\
+	\}\
+\
+	return $query;\
+\}\
+\
+function _list_function_name($parameters)\
+\{\
+	$select = //items;\
+	\
+	$where = //conditions;\
+	\
+	$this->db->select($select);\
+	$this->db->join('other_tables', 'table.key = other.key');\
+	\
+	return $this->db->get_where('main_table', $where)->result_array();\
+	\
+\}\
+\
+function create_function_name($parameters)\
+\{\
+\
+	foreach ($parameters as $index => $parameter)\
+	\{\
+		if ($table1) \
+		\{\
+			$to_table1['field_name'] = $parameter;\
+		\}\
+\
+		if ($table2) \
+		\{\
+			$to_table2['field_name'] = $parameter;\
+		\}\
+\
+		if ($table3) \
+		\{\
+			$to_table3['field_name'] = $parameter;\
+		\}\
+	\}\
+\
+	$this->db->insert('table1', $to_table1);\
+	$table1_id = $this->db->insert_id;\
+\
+	$to_table2[] = $table1_id;\
+	$to_table3[] = $table1_id;\
+\
+	$this->db->insert('table2', $to_table2);\
+	$table2_id = $this->db->insert_id;\
+\
+	$to_table3[] = $table2_id;\
+	$this->db->insert('table3', $to_table3);\
+	\
+\}\
+\
+// can also be used to delete by updating archived field to 1\
+function update_function_name($parameters)\
+\{\
+\
+	foreach ($parameters as $index => $parameter)\
+	\{\
+		if ($table1) \
+		\{\
+			$to_table1['field_name'] = $parameter;\
+		\}\
+\
+		if ($table2) \
+		\{\
+			$to_table2['field_name'] = $parameter;\
+		\}\
+\
+		if ($table3) \
+		\{\
+			$to_table3['field_name'] = $parameter;\
+		\}\
+	\}\
+	\
+	$where = //conditions\
+	$this->db->where($where);\
+	$this->db->update('table1', $to_table1);\
+\
+	$where = //conditions\
+	$this->db->where($where);\
+	$this->db->update('table2', $to_table2);\
+\
+	$where = //conditions\
+	$this->db->where($where);\
+	$this->db->update('table3', $to_table3);\
+	\
+\}\
+\
+/*\
+| ---------------------------------\
+|  Code for the View\
+| ---------------------------------\
+|\
+| Description of the code here\
+|\
+*/\
+\
+view function_name\
+\{\
+	title('function_name');\
+	\
+	\
+	form_open()\
+	\
+		$this->table->display('Message if no results', $data);\
+\
+		anchor('cancel');	\
+\
+		form_submit();\
+	\
+	form_close();\
+\}\
+	\
+}

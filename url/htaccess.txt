@@ -1,0 +1,24 @@
+RewriteEngine On
+
+# remove www from host while maintaining ssl
+RewriteCond %{HTTP_HOST} ^www\.(.+)
+RewriteCond %{HTTPS}s/%1 ^(on(s)|offs)/(.+)
+RewriteRule ^ http%2://%3%{REQUEST_URI} [L,R=301]
+
+# force subdomain while A host ttl cached
+RewriteCond %{HTTP_HOST} ^sirum\.org [NC]
+RewriteRule ^(.*)$ https://donate.%{SERVER_NAME}%{REQUEST_URI} [R,L]
+
+# force https only on live server
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP_HOST} ^donate\.sirum\.org [NC]
+RewriteRule ^(.*)$ https://%{SERVER_NAME}%{REQUEST_URI} [R,L]
+
+# clean up url root by placing clutter files in other folder 
+RewriteCond $1 ^(favicon\.ico|robots\.txt|sitemap\.xml)
+RewriteRule ^(.*)$ /other/$1 [L]
+
+# supress index.php except for certain folders which need direct access
+RewriteCond $1 !^(index\.php|sirum|cms|css|doc|js|label|manifest|other|images)
+RewriteRule ^(.+)$ index.php?\/$1
+

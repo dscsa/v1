@@ -1,0 +1,157 @@
+/* Keep the stretched top nav small in size */
+.responsive #header_main .container {
+	height: 50px;
+	line-height: 50px;
+}
+
+html {
+	/*height:100%; gets rid of scrollbar but header no longer shrinks*/
+	background:white !important;
+}
+
+/* Remove borders on tables */
+th, td {
+	border-style:none !important;
+	vertical-align: top;
+	padding-left:0px;
+}
+
+th:last-child, td:last-child {
+	padding-right:0px;
+}
+
+/* Make the profiler fit enfold's width */
+#codeigniter_profiler {
+	width:1030px !important;
+	margin-left:auto;
+	margin-right:auto;
+	word-break: break-all;
+}
+
+/* For use in big search boxes */
+.wide {
+	width:340px !important;
+}
+
+.narrow {
+	width:60px !important;
+	margin-bottom:0px !important;
+}
+
+.tall {
+	font-size:17px !important;
+}
+
+/* Short cut since most of enfold's
+ * elements are display:block
+ */
+.inline-block {
+	display:inline-block !important;
+}
+
+.nowrap {
+	white-space: nowrap !important;
+}
+
+/* Make enfold's accordian fit
+ * inside an input element
+ * and eliminate borders & margins
+ */
+
+.togglecontainer {
+	margin:0px;
+}
+
+.js_active .toggler {
+	border:none;
+	top:0px;
+	padding:0 0 0 35px;
+	left: -30px;
+	margin-right:-30px;
+}
+
+td .toggle_icon {
+	top:2px;
+}
+
+/* Make Edit/Delete inventory buttons
+ * only appear when row is hovered
+ */
+tr .tr-hover {
+	opacity: .2;
+}
+
+tr:hover .tr-hover {
+	opacity:1;
+	-webkit-transition: opacity .5s ease-in-out;
+	-moz-transition: 	  opacity .5s ease-in-out;
+	transition: 		  opacity .5s ease-in-out;
+}
+
+/*Don't break column names with sorting arrows on small screens */
+th a {
+	white-space:nowrap;
+}
+
+/*table buttons a little to large for the rest of the row*/
+body div td .avia-button {
+	margin-top:0px;
+	padding-top:8px;
+	padding-bottom:8px;
+}
+
+/* Update quantity tooltip
+ * defaults to transparent background
+ * 300px width with top/left offsets
+ * override these defaults
+ */
+.avia-search-tooltip {
+	background:#FFF;
+	width:auto;
+	top:auto !important;
+	left:auto !important;
+}
+
+.avia-tooltip {
+	width:auto;
+	text-align:left;
+	margin-left:10px;
+}
+
+.avia_message_box {
+	margin:10px 0px;
+}
+
+.avia-button {
+	cursor:pointer;
+}
+
+/* button elements have 2px borders unlike submit */
+button {
+	border-width: 0 0 1px 0;
+}
+
+#lightbox #header_main {
+	display:none;
+}
+
+#lightbox #main {
+	padding-top:0px !important;
+}
+
+.autocomplete-suggestions { border: 1px solid #999; background: #FFF; cursor: default; overflow: auto; -webkit-box-shadow: 1px 4px 3px rgba(50, 50, 50, 0.64); -moz-box-shadow: 1px 4px 3px rgba(50, 50, 50, 0.64); box-shadow: 1px 4px 3px rgba(50, 50, 50, 0.64); }
+.autocomplete-suggestion { padding: 2px 5px; white-space: nowrap; overflow: hidden; }
+.autocomplete-no-suggestion { padding: 2px 5px;}
+.autocomplete-selected { background: #F0F0F0; }
+
+.autocomplete-suggestion .tr-hover {
+	opacity: .1;
+}
+
+.autocomplete-selected  .tr-hover  {
+	opacity:1;
+}
+
+.red {
+	color:#c03 !important;
+}
