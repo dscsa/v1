@@ -223,13 +223,16 @@ class inventory extends MY_Model
 
 	}
 
+	//An associative array of fields, and the row#
 	function import($data, $row)
 	{
 
-		$sum =& self::$bulk['sum'];
+		//$sum =& self::$bulk['sum'];
 
     //if ( ! $row % 100)
 
+		//Unlike bulk() don't assume a certain field order.  Look for the correct names.
+		//TODO if all required fields are not present we should throw an error
 		if ($row == 1) {//Column headings
 			self::setFields($data);
 			return self::$bulk['alerts'][] = array_merge($data, ['error']);
@@ -237,6 +240,7 @@ class inventory extends MY_Model
 
 		//v2 shipment._id is in <10 digit recipient phone>.JSON Date.<10 digit donor phone>
 		//v1 only accepts 11 character int for donation_id.
+		//TODO how can we make this part designed for v2 more generalized to help with PharMerica and Coleman uploads. Use tracking numbers instead?
 		$donation_id = explode('.', $data[self::$bulk['donation_id']]);
 		if (count($donation_id) == 3) {
 		  list($donee_phone, $date_verified, $donor_phone) = $donation_id;
@@ -246,11 +250,14 @@ class inventory extends MY_Model
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: could not parse shipment._id.  It should have 0 or 2 periods"]);
 		}
 
+		//Format Date appropriately
 		$date_verified = date::format($date_verified, DB_DATE_FORMAT);
 
+		//Format Phone numbers appropriately
 		$donor_phone = '('.substr($donor_phone, 0, 3).') '.substr($donor_phone, 3, 3).'-'.substr($donor_phone, 6, 4);
 		$donee_phone = '('.substr($donee_phone, 0, 3).') '.substr($donee_phone, 3, 3).'-'.substr($donee_phone, 6, 4);
 
+		//Extract our data into variables.
 		$ndc = str_replace("'0", "0", $data[self::$bulk['ndc']]);
 		$qty = $data[self::$bulk['qty']];
 		$exp = $data[self::$bulk['exp']];
@@ -263,8 +270,10 @@ class inventory extends MY_Model
 		$price = $goodrx ?: $nadac;
 		$price_type = $goodrx ? 'goodrx' : 'nadac';
 
-		$sum += $qty;
+		//$sum += $qty;
 
+		//Use regular expressions for validation.  We are going to have a download of all rows with Errors
+		//so compine our uploaded data with the error if there is an issue and add it to the array of alerts.
 		if ( ! preg_match('/^[0-9-]+$/', $ndc))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
@@ -285,13 +294,17 @@ class inventory extends MY_Model
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Archived $archived must be empty or a date"]);
 		}
 
+		//Look up the uploaded NDC in our database.
 		$items = item::search(['upc' => $ndc]);
 
+		//If the NDC does not yet exist, try to create a new drug with it.
 		if (count($items) == 0)
 		{
+			//We can only create a drug if we were provided a drug name.
 			if ( ! $name)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not found and no drug.generic field was provided"]);
 
+			//We may need to pad the NDC with leading 0s into the 5-4 format so split it apart.
 			list($label, $prod) = explode('-', $ndc);
 
 			$drug = (object) [
@@ -305,11 +318,13 @@ class inventory extends MY_Model
 				'price_type'  => $price_type,
 			];
 
+			//Create the drug and store its id into an array
 			$this->db->insert('item', $drug);
 			$drug->id = $this->db->insert_id();
 			$items[] = $drug;
 		}
 
+		//If the NDC has mutiple matches in our DB then something is wrong!
 		if (count($items) > 1)
 		{
 			$results = [];
@@ -319,18 +334,25 @@ class inventory extends MY_Model
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
 		}
 
+		//Look up the uploaded donation/shipment in our DB
+		//TODO per note above is this generalizable to Coleman and PharMerica data. Using tracking numbers instead?
 		$donations = donation::search(['date_verified' => $date_verified]);
 
+		//If donation is not in the DB then try to create it
 		if (count($donations) == 0) {
+			//Our shipment id had a unique identifier for donor/donee.  If we switch to tracking numbers the two orgs will need to be looked up in the DB
 			$donors = org::search(['phone' => $donor_phone]);
 			$donees = org::search(['phone' => $donee_phone]);
 
+			//If we can't find a donor then we can't add the donation/shipment.  Don't think we should automatically create an org
 			if (count($donors) == 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: donor phone $donor_phone did not have any matches"]);
 
+			//If we can't find a donee then we can't add the donation/shipment. Don't think we should automatically create an org
 			if (count($donees) == 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: donee phone $donee_phone did not have any matches"]);
 
+			//Add the donation and store its id in an array
 			$donation = (object) [
 				'date_shipped' => $date_verified,
 				'date_verified' => $date_verified,
@@ -344,8 +366,7 @@ class inventory extends MY_Model
 			$donations[] = $donation;
 		}
 
-		//echo "<br>row $row, qty $qty, sum $sum";
-
+		//Ok Item should have exactly one drug and one donation/shipment at this point so we should be able to add
 		self::create([
 			'donation_id'	=> $donations[0]->donation_id,
 			'item_id'     => $items[0]->id,
@@ -358,6 +379,8 @@ class inventory extends MY_Model
 			'archived'		=> date::format($archived, DB_DATE_FORMAT),
 		]);
 
+		//We use $archived to designate if the item was accept by the donee into inventory.  If it was accepted
+		//then we need to increment our inventory of this drug by the qty we just added
 		if ( ! $archived)
 			self::increment(['org_id' => $donations[0]->donee_id, 'item_id' => $items[0]->id], $qty);
 	}
