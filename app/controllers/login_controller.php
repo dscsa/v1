@@ -29,10 +29,10 @@ class Login_controller extends MY_Controller
 	function index()
 	{
 		$success = session::create(trim(data::post('email')), trim(data::post('password')));
-
+		//$success = true;
 		if($success === true)
 		{
-			return to::info([], 'to_disclaimer', data::get('admin') ? "admin" : "donations", true);
+			return to::info([], 'to_disclaimer', data::get('admin') ? "admin" : "v1/app/controllers/donations_controller.php", true);
 		}
 
 		view::part("common/header", ['title' => 'Login']);

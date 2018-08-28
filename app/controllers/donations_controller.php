@@ -29,7 +29,7 @@ class Donations_controller extends MY_Controller
 			//['Value', 'value', 'dollar(value)'],
 			['Tracking', 'tracking_number', 'fedex()'],
 			['Status', 'date_status', 'status()', ['After' => 'input(date)', 'Before' => 'input(date)']],
-			['', '', 'button(donations/{donation_id}, Show&nbsp;Details)']
+			['', '', 'button(v1/url/index.php/donations/{donation_id}, Show&nbsp;Details)']
 		);
 
     $order = result::order() ?: 'donation.updated';
@@ -73,7 +73,7 @@ class Donations_controller extends MY_Controller
 
 		if (data::post() AND count($search) == 1)
 		{
-			to::url("donations/{$search[0]->donation_id}");
+			to::url("v1/url/index.php/donations/{$search[0]->donation_id}");
 		};
 
 		$query['status'] = 'pending';
@@ -127,51 +127,71 @@ class Donations_controller extends MY_Controller
 			$v['message'] = html::info('Saved! Donation was updated');
 		}
 
+
+		//create a temp local csv with the error rows 
+		//do this outside the import condition so we can force the download later
+		$this->load->helper('download');
+		$error_filename = "tmp_import_errors";
+		$filepath = $_SERVER["DOCUMENT_ROOT"].'/'.$error_filename.'.csv';
+
 		//Submit is programmatic so no button e.g., Search can have been pressed
 		//POST's Upload Value will not be set unless form_validation is run.
 		if (valid::and_submit('import'))
 		{
 			item::csv('inventory', 'bulk');
 
+			//Handling of any errors in the import
 			if (inventory::$bulk['alerts'])
 			{
-				$v['message'] = html::alert('CSV Errors:<br>'.implode('<br>', inventory::$bulk['alerts']), '', ['style' => 'text-align:left']);
-			}
-			else
-			{
-				$success = '';
 
-				$qty_key = data::post('donation_type') == 'Donation' ? 'donor_qty' : 'donee_qty';
+				$v['message'] = html::alert('CSV Errors:<br>'.implode('<br>', inventory::$bulk['alerts']), '', ['style' => 'text-align:left']);
+
+				//fill it with the error rows (with error description in last column)
+				$output = fopen($filepath, 'w');
+				for($i = 0; $i < count(inventory::$bulk['alerts']); $i++){
+					fputcsv($output, inventory::$bulk['error_rows'][$i]);
+				}
+				fclose($output);
+				
+			}
+			
+			$success = '';
+
+			$qty_key = data::post('donation_type') == 'Donation' ? 'donor_qty' : 'donee_qty';
 
 				//Reverse so that display order is the same as the CSV
-				for($row = count(inventory::$bulk['upload']) - 1; $row >= 0; --$row)
+			for($row = count(inventory::$bulk['upload']) - 1; $row >= 0; --$row)
+			{
+				$data = inventory::$bulk['upload'][$row];
+
+				inventory::create([
+					'donation_id'	=> $data['donation_id'] ?: $donation_id,
+					'item_id'     => $data['id'],
+					$qty_key			=> $data['dispensed'],
+					'org_id'      => $org_id,
+					'price' 	 		=> $data['price'],
+					'price_date' 	=> $data['price_date'],
+					'price_type' 	=> $data['price_type'],
+					'exp_date'		=> $data['exp_date'],
+					'archived'		=> $data['archived']
+				]);
+
+				if ($qty_key == 'donee_qty' AND ! $data['archived'])
 				{
-					$data = inventory::$bulk['upload'][$row];
-
-					inventory::create([
-						'donation_id'	=> $data['donation_id'] ?: $donation_id,
-						'item_id'     => $data['id'],
-						$qty_key			=> $data['dispensed'],
-						'org_id'      => $org_id,
-						'price' 	 		=> $data['price'],
-						'price_date' 	=> $data['price_date'],
-						'price_type' 	=> $data['price_type'],
-						'exp_date'		=> $data['exp_date'],
-						'archived'		=> $data['archived']
-					]);
-
-					if ($qty_key == 'donee_qty' AND ! $data['archived'])
-					{
 						//TODO Good enough, but this is not quite right. If the first NDC brings total to -2, then
 						//this will goto zero, however then if the next NDC says increase by 1 then it will goto
 						//1 and show rather than being at -1 which would still be hidden
-						inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
-					}
-
-					$success = "Row ".($row+2).": $data[ndc] was added with quantity $data[dispensed]<br>".$success;
+					inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
 				}
 
-				$v['message'] = html::info('Donation items imported successfully<br><br>'.$success, '', ['style' => 'text-align:left']);
+				$success = "Row ".($row+2).": $data[ndc] was added with quantity $data[dispensed]<br>".$success;
+			}
+
+			$v['message'] = html::info('Donation items imported successfully<br><br>'.$success, '', ['style' => 'text-align:left']);
+			
+			if (inventory::$bulk['alerts']){
+				ob_clean();
+				force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
 			}
 		}
 
@@ -204,7 +224,7 @@ class Donations_controller extends MY_Controller
 
 			donation::update(['date_verified' => $donation[0]->date_verified], $donation->donation_id);
 
-			admin::email("Donation Verified", html::link("donations/$donation->donation_id", "Donation $donation->donation_id")." with tracking number ".$donation->fedex()." from $donation->donor_org was verified");
+			admin::email("Donation Verified", html::link("v1/url/index.php/donations/$donation->donation_id", "Donation $donation->donation_id")." with tracking number ".$donation->fedex()." from $donation->donor_org was verified");
 		}
 
 		$v['results'] = $donation;
@@ -478,7 +498,7 @@ class Donations_controller extends MY_Controller
 		// in this situation and we want to make sure we add to DONEE QTY
 		donation::confirm($donation_id, $items, $donor_id == $donee_id ? 'donee' : 'donor', data::post('quantities'));
 
-		to::info(['Success!', 'Items added to the donation'], 'to_default', "donations/$donation_id");
+		to::info(['Success!', 'Items added to the donation'], 'to_default', "v1/url/index.php/donations/$donation_id");
 	}
 
 /*

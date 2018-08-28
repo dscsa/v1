@@ -140,7 +140,7 @@ function universal($value)
 
 			if ($row < 10000 + $startRow) {
 			  unlink($file);
-				return $row;
+				return basename($name);
 			}
 	}
 

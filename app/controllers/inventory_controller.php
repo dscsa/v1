@@ -6,6 +6,11 @@ class Inventory_controller extends MY_Controller
 	{
 		user::login($org_id);
 
+		$this->load->helper('download');
+		$error_filename = "tmp_import_errors";
+		$filepath = $_SERVER["DOCUMENT_ROOT"].'/'.$error_filename.'.csv';
+
+
 		if(data::post('delete'))
 		{
 			inventory::delete(key(data::post('delete')));
@@ -46,27 +51,36 @@ class Inventory_controller extends MY_Controller
 		//POST's Upload Value will not be set unless form_validation is run.
 		if (valid::and_submit('import'))
 		{
-			item::csv('inventory', 'bulk');
+			
+			item::csv('inventory', 'import');
 
 			if (inventory::$bulk['alerts'])
 			{
 				$v['message'] = html::alert('CSV Errors:<br>'.implode('<br>', inventory::$bulk['alerts']), '', ['style' => 'text-align:left']);
-			}
-			else
-			{
-				$success = 'Inventory imported successfully';
-
-				foreach (inventory::$bulk['upload'] as $row => $data)
-				{
-					//TODO Good enough, but this is not quite right. If the first NDC brings total to -2, then
-					//this will goto zero, however then if the next NDC says increase by 1 then it will goto
-					//1 and show rather than being at -1 which would still be hidden
-					inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
-
-					$success .= "<br>Row ".($row+2).": $data[ndc] quantity $data[verb] by $data[dispensed]";
+				//fill it with the error rows (with error description in last column)
+				$output = fopen($filepath, 'w');
+				for($i = 0; $i < count(inventory::$bulk['alerts']); $i++){
+					fputcsv($output, inventory::$bulk['alerts'][$i]);
 				}
+				fclose($output);
+			}
 
-				$v['message'] = html::info($success, '', ['style' => 'text-align:left']);
+			$success = 'Inventory imported successfully';
+
+			foreach (inventory::$bulk['upload'] as $row => $data)
+			{
+				//TODO Good enough, but this is not quite right. If the first NDC brings total to -2, then
+				//this will goto zero, however then if the next NDC says increase by 1 then it will goto
+				//1 and show rather than being at -1 which would still be hidden
+				inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
+
+				$success .= "<br>Row ".($row+2).": $data[ndc] quantity $data[verb] by $data[dispensed]";
+			}
+
+			$v['message'] = html::info($success, '', ['style' => 'text-align:left']);
+			if ((count(inventory::$bulk['alerts']) > 6) || ((count(inventory::$bulk['alerts']) > 1) && (strlen(inventory::$bulk['pharmericaMonth']) == 0))){
+				ob_clean();
+				force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
 			}
 		}
 

@@ -183,7 +183,8 @@ class MY_Form_validation extends CI_Form_validation
 			$_POST = array_diff_key($_POST, $_FILES);
 
 			//Give us access to the uploaded file
-			return $_POST['upload'] = $ci->upload->data()['full_path'];;
+			$_POST['orig_filename'] =  $ci->upload->data()['client_name'];
+			return $_POST['upload'] = $ci->upload->data()['full_path'];
 		}
 
 		// default upload filetype error is too generic to be helpful so we set a custom one

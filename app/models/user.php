@@ -119,10 +119,10 @@ class user extends MY_Model
 
 	function login( & $org_id = '', $permission = '')
 	{
-		if(data::get('environment') != ENVIRONMENT)
+		/*if(data::get('environment') != ENVIRONMENT)
 		{
 			to::url('login', true);
-		}
+		}*/
 
 		if ($permission == 'admin')
 		{
@@ -151,7 +151,7 @@ class user extends MY_Model
 		// users. Check to see if user has org admin perm over given user_id
 		if (org::permit($org_id))
 		{
-			$org_id = data::get('org_id');
+			$org_id = 1; //data::get('org_id');
 
 			return true;
 		}
