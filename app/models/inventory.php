@@ -218,6 +218,9 @@ class inventory extends MY_Model
 			if ($value == 'qty.to') //V2
 				self::$bulk['qty'] = $index;
 
+			if ($value == 'Qty') //Coleman
+				self::$bulk['qty'] = $index;
+
 			if ($value == 'Return Quantity') //Pharmerica
 				self::$bulk['qty'] = $index;
 
@@ -237,6 +240,9 @@ class inventory extends MY_Model
 				self::$bulk['name'] = $index;
 
 			if ($value == 'Drug Name') //Pharmerica
+				self::$bulk['name'] = $index;
+
+			if ($value == 'Drug Name & Strength') //Coleman
 				self::$bulk['name'] = $index;
 
 			if (strtolower($value) == 'drug label name') //Polaris
@@ -321,7 +327,7 @@ class inventory extends MY_Model
 		//Unlike bulk() don't assume a certain field order.  Look for the correct names.
 		//TODO if all required fields are not present we should throw an error
 		if ($row == 1) {//Column headings
-			if($data[0] == 'Donations Report'){
+			if(strpos($data[0],'Donations Report') != false){
 				self::$bulk['pharmericaMonth'] = '_'; //a placeholder until we can put a date
 				return self::$bulk['alerts'][] = $data; //just copy taht row into error csv so that we can reupload
 			} else { //then it's not pharmerica, so it has no extra rows above the headers
@@ -403,9 +409,6 @@ class inventory extends MY_Model
 			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
 		}
 
-		if(!$ndc){
-			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a NDC. Make sure column is called NDC or ndc"]);
-		}
 
 		$name = $data[self::$bulk['name']];
 
@@ -424,6 +427,8 @@ class inventory extends MY_Model
 		}
 
 
+
+
 		$donor_id = $donee_id = ''; //only using these if pharmerica
 
 		//for pharmerica, on each row, need to get donor and donee ids
@@ -431,7 +436,16 @@ class inventory extends MY_Model
 			//month is self::$bulk['pharmericaMonth'] name is self::$bulk['pharmacy_name']
 			//use name to find the donor id
 			//get the latest donation with that donor id, take the donee id
-			$full_name = "Pharmerica ".$data[self::$bulk['pharmacy_name']];
+			$full_name = '';
+
+			//double check for weird pharmerica names that are different in their data vs theri viewmsater data
+			if(strtolower($data[self::$bulk['pharmacy_name']]) == "colorado sprngs"){ //THIS IS A TYPEO IN THEIR VIEWMASTER DATA for some reason
+				$full_name = "Pharmerica Colorado Springs";
+			} else if(strtolower($data[self::$bulk['pharmacy_name']]) == "des moines"){
+				$full_name = "Pharmerica Urbandale";
+		    } else {
+				$full_name = "Pharmerica ".$data[self::$bulk['pharmacy_name']]; //then they refer to themselves the same way
+			}
 			$donor_obj = org::search(['org.name' => $full_name]);
 			if(count($donor_obj) == 0){
 				//weren't able to find pharmacy name
@@ -450,7 +464,7 @@ class inventory extends MY_Model
 
 
 		//Use regular expressions for validation. 
-		if ( ! preg_match('/^[0-9-]+$/', $ndc))
+		if (strlen($ndc) > 0 AND ! preg_match('/^[0-9-]+$/', $ndc))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
 		}
@@ -470,15 +484,22 @@ class inventory extends MY_Model
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Archived $archived must be empty or a date"]);
 		}
 
+		$looked_up_by_name = false;
 		//Look up the uploaded NDC in our database.
 		$items = item::search(['upc' => $ndc]);
+		if(count($items) == 0){
+			$items = item::search(['name' => $name]);
+			$looked_up_by_name = true;
+		}
 
 		//If the NDC does not yet exist, try to create a new drug with it.
 		if (count($items) == 0)
 		{
 			//We can only create a drug if we were provided a drug name.
 			if (!$name)
-				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not found and no name field was provided (column can be drug.generic, Drug Name, Drug Label Name", $filename]);
+				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not found and no name field was provided (column can be drug.generic, Drug Name, Drug Label Name"]);
+			if(!$ndc)
+				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $name was not found and no ndc field was provided"]);
 
 			$upc = '';
 
@@ -509,7 +530,7 @@ class inventory extends MY_Model
 		}
 
 		//If the NDC has mutiple matches in our DB then something is wrong!
-		if (count($items) > 1)
+		if ((count($items) > 1) AND (!$looked_up_by_name))
 		{
 			$results = [];
 			foreach($items as $item) {
