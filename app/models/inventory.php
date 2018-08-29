@@ -221,6 +221,9 @@ class inventory extends MY_Model
 			if ($value == 'Return Quantity') //Pharmerica
 				self::$bulk['qty'] = $index;
 
+			if ($value == 'Return Qty') //Polaris
+				self::$bulk['qty'] = $index;
+
 			if ($value == 'exp.to')
 				self::$bulk['exp'] = $index;
 
@@ -296,12 +299,23 @@ class inventory extends MY_Model
 		} 
 	}
 
+
+	function isPharmerica(){
+		return strlen(self::$bulk['pharmericaMonth']) > 0;
+	}
+
+	function isV2(){
+		return array_key_exists('donation_id', self::$bulk);
+	}
+
+
+
 	//This is called from the inventory page only, at this point
 	//An associative array of fields, and the row#
 	function import($data, $row)
 	{
 		//$sum =& self::$bulk['sum'];
-		$filename = data::post('orig_filename'); //gets the filename
+		$filename = data::post('orig_filename'); //gets the filename 
 
     	//if ( ! $row % 100)
 		//Unlike bulk() don't assume a certain field order.  Look for the correct names.
@@ -316,7 +330,7 @@ class inventory extends MY_Model
 			}
 	  	}
 
-	  	if((strlen(self::$bulk['pharmericaMonth']) > 0) AND ($row <= 6)){ //if it's pharmerica, and one of the first 6 rows (boilerplate stuff)
+	  	if(self::isPharmerica() AND ($row <= 6)){ //if it's pharmerica, and one of the first 6 rows (boilerplate stuff)
 	  		if($row == 2){
 	  			$raw_date = $data[0];
 	  			preg_match('/ ([0-9]{2})\//',$raw_date,$m);
@@ -353,7 +367,7 @@ class inventory extends MY_Model
 		//v2 shipment._id is in <10 digit recipient phone>.JSON Date.<10 digit donor phone>
 		//v1 only accepts 11 character int for donation_id.
 
-		if(array_key_exists('donation_id', self::$bulk)){ //IF A v2 CSV
+		if(self::isV2()){ //IF A v2 CSV
 			$donation_id = explode('.', $data[self::$bulk['donation_id']]);
 			if (count($donation_id) == 3) {
 			  list($donee_phone, $date_verified, $donor_phone) = $donation_id;
@@ -385,13 +399,21 @@ class inventory extends MY_Model
 		//Extract these 3 out here so we do it for non-V2 csv's as well
 		$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
 		$qty = $data[self::$bulk['qty']];
+		if(!$qty){
+			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
+		}
+
+		if(!$ndc){
+			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a NDC. Make sure column is called NDC or ndc"]);
+		}
+
 		$name = $data[self::$bulk['name']];
 
 
 
 		//if there was no tracking number in the columns then its not v2, and if they're not pharmerica
 		//then we need a tracking number in file name, else the whole thign won't work
-		if((!array_key_exists('tracking_num', self::$bulk)) AND ((strlen(self::$bulk['pharmericaMonth']) == 0))){
+		if((!array_key_exists('tracking_num', self::$bulk)) AND !self::isPharmerica()){
 			preg_match('/([0-9]{12})/',$filename,$m);
 			if(count($m) == 0){
 				//error
@@ -401,10 +423,11 @@ class inventory extends MY_Model
 			}
 		}
 
+
 		$donor_id = $donee_id = ''; //only using these if pharmerica
 
 		//for pharmerica, on each row, need to get donor and donee ids
-		if((strlen(self::$bulk['pharmericaMonth']) > 0)){
+		if(self::isPharmerica()){
 			//month is self::$bulk['pharmericaMonth'] name is self::$bulk['pharmacy_name']
 			//use name to find the donor id
 			//get the latest donation with that donor id, take the donee id
@@ -417,13 +440,16 @@ class inventory extends MY_Model
 				//return self::$bulk['alerts'][] = array_merge($data, [$donor_obj[0]->id]);	
 				$donor_id = $donor_obj[0]->id;
 				$donations_obj = donation::search(['donor_id' => $donor_id]);
-				$donee_id = $donations_obj[0]->donee_id;
+				if(count($donations_obj) == 0){
+					return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find any donations by this pharmacy that exist. Please create one in V1 (by making a new label) to their appropriate recipient."]);	
+				} else {
+					$donee_id = $donations_obj[0]->donee_id;
+				}
 			}
 		}
 
 
-		//Use regular expressions for validation.  We are going to have a download of all rows with Errors
-		//so compine our uploaded data with the error if there is an issue and add it to the array of alerts.
+		//Use regular expressions for validation. 
 		if ( ! preg_match('/^[0-9-]+$/', $ndc))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
@@ -448,7 +474,7 @@ class inventory extends MY_Model
 		$items = item::search(['upc' => $ndc]);
 
 		//If the NDC does not yet exist, try to create a new drug with it.
-		if (count($items) == 0) //TODO MAKE THIS GENERALIZABLE
+		if (count($items) == 0)
 		{
 			//We can only create a drug if we were provided a drug name.
 			if (!$name)
@@ -463,19 +489,17 @@ class inventory extends MY_Model
 				'description'	=> ($description ?: $name)." (Rx ".($description ? 'Brand' : 'Generic').")",
 			];
 
-			if(array_key_exists('donation_id', self::$bulk)){ //V2 is only one where ndc is dash-separated
+			if(self::isV2()){ //V2 is only one where ndc is dash-separated
 				list($label, $prod) = explode('-', $ndc); //may need to pad the NDC with leading 0s into the 5-4 format so split it apart.
 				$upc = str_pad($label, 5, '0', STR_PAD_LEFT).str_pad($prod, 4, '0', STR_PAD_LEFT);
-				$drug->price = $price;
-				$drug->price_date = $price_date;
-				$drug->price_type = $price_type ? $price_type : '0000-00-00 00:00:00';
+				
 			} else {
 				$upc =  substr($ndc, 0, 9); //TODO: Confirm that getting rid of package code like this is all we need to do
-				$drug->price = 0;
-				$drug->price_date = '0000-00-00 00:00:00';
-				$drug->price_type = '';
 			}
 
+			$drug->price = $price ? $price : 0;
+			$drug->price_date = $price_date ? $price_date : '0000-00-00 00:00:00';
+			$drug->price_type = $price_type? $price_type : '';
 			$drug->upc = $upc;
 
 			//Create the drug and store its id into an array
@@ -497,7 +521,7 @@ class inventory extends MY_Model
 		//Look up the uploaded donation/shipment in our DB
 		//$donations = donation::search(['date_verified' => $date_verified]);
 		$donations = [];
-		if(strlen(self::$bulk['pharmericaMonth']) == 0){ //If not Pharmerica, then use tracking number
+		if(!self::isPharmerica()){ //If not Pharmerica, then use tracking number
 			$donations = donation::search(['tracking_number' => $tracking_num]);
 		} else { //If pharmerica, lookup by dummy tracking number name
 			//look up with pharmacy donor id and the placeholder name format ('Viewmaster_January_2018')
@@ -506,10 +530,10 @@ class inventory extends MY_Model
 
 		//If donation is not in the DB then try to create it for V2 or Pharmerica ONLY
 		if (count($donations) == 0) {
-			if((strlen(self::$bulk['pharmericaMonth']) > 0) OR (array_key_exists('donation_id', self::$bulk))){
+			if(self::isPharmerica() OR self::isV2()){
 				$donation = [];
 
-				if(strlen(self::$bulk['pharmericaMonth']) > 0){ //Create fake Pharmerica
+				if(self::isPharmerica()){ //Create fake Pharmerica
 					$fake_tracking_number = 'Viewmaster_'.self::$bulk['pharmericaMonth']; //Viewmaster_January_2017
 					//use $donor_id & $donee_id which come from first (or last?) donation
 					//calculate date_shipped using pharmerica month
@@ -523,7 +547,6 @@ class inventory extends MY_Model
 
 				} else { //Create corresponding V2 donation
 					//Our shipment id had a unique identifier for donor/donee.  If we switch to tracking numbers the two orgs will need to be looked up in the DB
-					//IF USING V2
 					$donors = org::search(['phone' => $donor_phone]);
 					$donees = org::search(['phone' => $donee_phone]);
 
@@ -540,7 +563,8 @@ class inventory extends MY_Model
 						'date_verified' => $date_verified,
 						'created'  => $date_verified,
 						'donor_id' => $donors[0]->id,
-						'donee_id' => $donees[0]->id
+						'donee_id' => $donees[0]->id,
+						'tracking_number' => $tracking_num
 					];
 				}
 
