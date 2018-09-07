@@ -198,7 +198,8 @@ class defaults
 			'Pennsylvania' =>
 			[
 				90 => 'Long-Term Care Nursing Facility',
-				91 => "Assisted Living Residence"
+				91 => "Assisted Living Residence",
+				92 => 'Pharmacy'
 			],
 			'Georgia' =>
 			[
@@ -231,6 +232,7 @@ class defaults
 			],
 			'Texas' =>
 			[
+				160 => 'Pharmacy',
 				161 => 'Wholesaler'
 			],
 			'Illinois' =>
@@ -240,6 +242,34 @@ class defaults
 			'South Carolina' =>
 			[
 				180 => 'Pharmacy'
+			],
+			'Maryland' =>
+			[
+				190 => 'Pharmacy'
+			],
+			'Maine' =>
+			[
+				200 => 'Pharmacy'
+			],
+			'Idaho' =>
+			[
+				210 => 'Pharmacy'
+			],
+			'New Mexico' =>
+			[
+				220 => 'Pharmacy'
+			],
+			'Nebreska' =>
+			[
+				230 => 'Pharmacy'
+			],
+			'Tennessee' =>
+			[
+				240 => 'Pharmacy'
+			],
+			'Kentucky' =>
+			[
+				250 => 'Pharmacy'
 			]
 		);
 
