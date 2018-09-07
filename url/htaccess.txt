@@ -1,18 +1,18 @@
 RewriteEngine On
 
 # remove www from host while maintaining ssl
-RewriteCond %{HTTP_HOST} ^www\.(.+)
-RewriteCond %{HTTPS}s/%1 ^(on(s)|offs)/(.+)
-RewriteRule ^ http%2://%3%{REQUEST_URI} [L,R=301]
+# RewriteCond %{HTTP_HOST} ^www\.(.+)
+# RewriteCond %{HTTPS}s/%1 ^(on(s)|offs)/(.+)
+# RewriteRule ^ http%2://%3%{REQUEST_URI} [L,R=301]
 
 # force subdomain while A host ttl cached
 RewriteCond %{HTTP_HOST} ^sirum\.org [NC]
-RewriteRule ^(.*)$ https://donate.%{SERVER_NAME}%{REQUEST_URI} [R,L]
+RewriteRule ^(.*)$ https://test.%{SERVER_NAME}%{REQUEST_URI} [R,L]
 
-# force https only on live server
-RewriteCond %{HTTPS} !=on
-RewriteCond %{HTTP_HOST} ^donate\.sirum\.org [NC]
-RewriteRule ^(.*)$ https://%{SERVER_NAME}%{REQUEST_URI} [R,L]
+# force http only on live server
+RewriteCond %{HTTPS} =on
+RewriteCond %{HTTP_HOST} ^test\.sirum\.org [NC]
+RewriteRule ^(.*)$ http://%{SERVER_NAME}%{REQUEST_URI} [R,L]
 
 # clean up url root by placing clutter files in other folder 
 RewriteCond $1 ^(favicon\.ico|robots\.txt|sitemap\.xml)

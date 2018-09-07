@@ -7,7 +7,7 @@ class Inventory_controller extends MY_Controller
 		user::login($org_id);
 
 		$this->load->helper('download');
-		$error_filename = "tmp_import_errors";
+		$error_filename = "import_errors";
 		$filepath = $_SERVER["DOCUMENT_ROOT"].'/'.$error_filename.'.csv';
 
 
@@ -51,38 +51,66 @@ class Inventory_controller extends MY_Controller
 		//POST's Upload Value will not be set unless form_validation is run.
 		if (valid::and_submit('import'))
 		{
-			
-			item::csv('inventory', 'import');
 
-			if (inventory::$bulk['alerts'])
+			item::csv('inventory', 'import');
+			$success = '';
+			$error_arr = [];
+			$num_errors = 0;
+			if ((count(inventory::$bulk['alerts']) > 6) || ((count(inventory::$bulk['alerts']) > 1) && (strlen(inventory::$bulk['pharmericaMonth']) == 0)))
 			{
-				$v['message'] = html::alert('CSV Errors:<br>'.implode('<br>', inventory::$bulk['alerts']), '', ['style' => 'text-align:left']);
+				//$v['message'] = html::alert('CSV Errors:<br>'.implode('<br>', inventory::$bulk['alerts']), '', ['style' => 'text-align:left']);
 				//fill it with the error rows (with error description in last column)
+				$success .= 'Following unique errors:';
 				$output = fopen($filepath, 'w');
 				for($i = 0; $i < count(inventory::$bulk['alerts']); $i++){
-					fputcsv($output, inventory::$bulk['alerts'][$i]);
+					 $error_text = array_values(array_slice(inventory::$bulk['alerts'][$i], -1))[0];
+					if(strpos($error_text,"Donation had to be created") === false){
+						if(strpos(strtolower($error_text), "beyond row limit") === false){
+							$num_errors += 1;
+						}
+						fputcsv($output, inventory::$bulk['alerts'][$i]);
+					}
+					if(!in_array($error_text, $error_arr) AND strlen($error_text) > 0 AND $error_text !== 'error'){
+						$success .= '<br>'.$error_text;
+						$error_arr[] = $error_text;
+					}
 				}
 				fclose($output);
 			}
 
-			$success = 'Inventory imported successfully';
+			if(count(inventory::$bulk['upload']) > 0){
+				$success .= '<br><br>The following inventory imported successfully';
+			}
 
 			foreach (inventory::$bulk['upload'] as $row => $data)
 			{
 				//TODO Good enough, but this is not quite right. If the first NDC brings total to -2, then
 				//this will goto zero, however then if the next NDC says increase by 1 then it will goto
 				//1 and show rather than being at -1 which would still be hidden
-				inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
+				//inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
 
-				$success .= "<br>Row ".($row+2).": $data[ndc] quantity $data[verb] by $data[dispensed]";
+				$success .= "<br>Row $data[row]: $data[ndc] quantity $data[verb] by $data[dispensed]";
 			}
-
+			$total_rows = $num_errors + count(inventory::$bulk['upload']);
+			$percent_errors = 100 * $num_errors / $total_rows;
+			$success .= "<br>".$num_errors."::".count(inventory::$bulk['upload']);
+			$success .= "<br> Percentage of errors roughly $percent_errors%";
 			$v['message'] = html::info($success, '', ['style' => 'text-align:left']);
+			
 			if ((count(inventory::$bulk['alerts']) > 6) || ((count(inventory::$bulk['alerts']) > 1) && (strlen(inventory::$bulk['pharmericaMonth']) == 0))){
-				ob_clean();
-				force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
+				//ob_clean();
+				//force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
 			}
 		}
+
+
+		if(valid::submit('Get Errors')){
+                	ob_clean();
+                       force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
+
+		}
+
+
 
 		//Get rid of anything implicitly deleted
 		$this->db->delete('donation_items', '(donor_qty = 0 AND donee_qty IS NULL) OR (donee_qty = 0 AND donor_qty IS NULL) OR (donee_qty = 0 AND donor_qty = 0)');
@@ -152,3 +180,4 @@ class Inventory_controller extends MY_Controller
 
 
 /* ------------------------------------------------------------------------- End of File -------------------------------------------------------------------------*/
+

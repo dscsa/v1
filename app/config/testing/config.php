@@ -14,7 +14,7 @@
 | path to your installation.
 |
 */
-$config['base_url']	= '';
+$config['base_url']	= 'https://test.sirum.org/';
 
 /*
 |--------------------------------------------------------------------------
@@ -228,7 +228,7 @@ $config['cache_path'] = '';
 */
 
 $config['encryption_key'] = '53sS10nP45swOrD';
-$config['aws_volume'] = 'vol-9158d1fd';
+$config['aws_volume'] = 'vol-7fe8d45e';
 
 /*
 |--------------------------------------------------------------------------

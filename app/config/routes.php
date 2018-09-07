@@ -48,7 +48,7 @@ $route['404_override'] = '';
 |
 */
 
-$route['donations'] = 'donations';
+
 $route['donations/(:num)'] 	= "donations/about/$1";
 $route['update'] = 'join/update';
 $route['(:any)/formulary'] = 'formulary/published/$1';

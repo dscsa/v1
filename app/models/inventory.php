@@ -106,6 +106,7 @@ class inventory extends MY_Model
 	 'alerts' => [],
 	 'pharmericaMonth' => '',
 	 'shippedHolder' => '',
+	 'quasi_cache' => [],
 	];
 
 	function bulk($data)
@@ -263,16 +264,27 @@ class inventory extends MY_Model
  			if ($value == 'shipment.tracking')
  				self::$bulk['tracking_num'] = $index;
 
+ 			 if ($value == 'tracking')
+ 				self::$bulk['tracking_num'] = $index;
+
+ 			 if ($value == 'tracking number')
+ 				self::$bulk['tracking_num'] = $index;
+
+ 			 if ($value == 'tracking num')
+ 				self::$bulk['tracking_num'] = $index;
+
  			if ($value == 'Pharmacy Name') //Pharmerica
  				self::$bulk['pharmacy_name'] = $index;
 		}
-
-		if (empty($data[self::$bulk['donation_id']])) {
+		
+		//print_r('bulk');
+		//print_r(self::$bulk);
+		/*if (empty($data[self::$bulk['donation_id']])) {
 			echo 'bulk';
 			print_r(self::$bulk);
 			echo 'data';
 			print_r($data);
-		}
+		}*/
 
 	}
 
@@ -320,14 +332,38 @@ class inventory extends MY_Model
 	//An associative array of fields, and the row#
 	function import($data, $row)
 	{
-		//$sum =& self::$bulk['sum'];
-		$filename = data::post('orig_filename'); //gets the filename 
+		if($row > 500){
+                        return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
+		}
 
-    	//if ( ! $row % 100)
+		if($row % 100 == 0){
+			//echo "Processing<br>";
+			//flush();
+			//print_r("...");
+			//ob_flush();
+			//return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
+		}
+
+		//if($row > 300){
+		//	return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
+		//}
+		//$sum =& self::$bulk['sum'];
+		$filename = "";
+		if(array_key_exists('orig_filename', self::$bulk['quasi_cache'])){
+			$filename = self::$bulk['quasi_cache']['orig_filename'];
+		} else {
+			$filename = data::post('orig_filename');
+			self::$bulk['quasi_cache']['orig_filename'] = $filename;
+		}
+		//$filename = data::post('orig_filename'); //gets the filename 
+
+    		//if ( ! $row % 100)
 		//Unlike bulk() don't assume a certain field order.  Look for the correct names.
 		//TODO if all required fields are not present we should throw an error
 		if ($row == 1) {//Column headings
-			if(strpos($data[0],'Donations Report') != false){
+			//print_r("HERE");
+			//print_r(implode("::",$data));
+			if(strpos($data[0],'Donations Report') !== false){
 				self::$bulk['pharmericaMonth'] = '_'; //a placeholder until we can put a date
 				return self::$bulk['alerts'][] = $data; //just copy taht row into error csv so that we can reupload
 			} else { //then it's not pharmerica, so it has no extra rows above the headers
@@ -373,6 +409,7 @@ class inventory extends MY_Model
 		//v2 shipment._id is in <10 digit recipient phone>.JSON Date.<10 digit donor phone>
 		//v1 only accepts 11 character int for donation_id.
 
+		//GET ALL THE ITEMS OUT OF THE ROW FIRST
 		if(self::isV2()){ //IF A v2 CSV
 			$donation_id = explode('.', $data[self::$bulk['donation_id']]);
 			if (count($donation_id) == 3) {
@@ -392,18 +429,21 @@ class inventory extends MY_Model
 			
 			//extract data in variables	
 			$exp = $data[self::$bulk['exp']];
-			$archived = $data[self::$bulk['verified']] ? '' : gmdate('c');
-			$description = $data[self::$bulk['description']];
-			$price_date = $data[self::$bulk['price_date']];
-			$goodrx = $data[self::$bulk['goodrx']];
-			$nadac = $data[self::$bulk['nadac']];
+			
+			$archived = array_key_exists('verified', self::$bulk) ?  $data[self::$bulk['verified']] : "";
+			$description = array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
+			$price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
+			$goodrx = array_key_exists('goodrx', self::$bulk) ? $data[self::$bulk['goodrx']] : "";
+			$nadac = array_key_exists('nadac', self::$bulk) ? $data[self::$bulk['nadac']] : "";
 			$price = $goodrx ?: $nadac;
 			$price_type = $goodrx ? 'goodrx' : 'nadac';
-			$tracking_num = $data[self::$bulk['tracking_num']];
 		}
-
+		$ndc = '';
 		//Extract these 3 out here so we do it for non-V2 csv's as well
-		$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
+		if(array_key_exists('ndc', self::$bulk)){
+			$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
+		}
+		
 		$qty = $data[self::$bulk['qty']];
 		if(!$qty){
 			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
@@ -412,15 +452,22 @@ class inventory extends MY_Model
 
 		$name = $data[self::$bulk['name']];
 
+		//If there is a tracking number column, use it
+		if(array_key_exists('tracking_num', self::$bulk)){
+			$tracking_num = $data[self::$bulk['tracking_num']];
+		}
 
-
-		//if there was no tracking number in the columns then its not v2, and if they're not pharmerica
+		//if there was no tracking number in the columns and if they're not pharmerica
 		//then we need a tracking number in file name, else the whole thign won't work
 		if((!array_key_exists('tracking_num', self::$bulk)) AND !self::isPharmerica()){
-			preg_match('/([0-9]{12})/',$filename,$m);
+			preg_match('/([0-9]{15})/',$filename,$m); //if polaris this will match
 			if(count($m) == 0){
-				//error
-				return self::$bulk['alerts'][] = array_merge($data, ["Filename must have actual SIRUM tracking number (12 digits) or needs a column titled 'tracking_num'"]);
+				preg_match('/([0-9]{6})/',$filename,$m); //if coleman this will match
+				if(count($m) == 0){
+					return self::$bulk['alerts'][] = array_merge($data, ["Filename must have actual SIRUM tracking number (last 6 or full 15 digits) or needs a column titled 'tracking_num'"]);
+				} else {
+					$tracking_num = $m[0];
+				}
 			} else {
 				$tracking_num = $m[0];
 			}
@@ -446,20 +493,50 @@ class inventory extends MY_Model
 		    } else {
 				$full_name = "Pharmerica ".$data[self::$bulk['pharmacy_name']]; //then they refer to themselves the same way
 			}
-			$donor_obj = org::search(['org.name' => $full_name]);
-			if(count($donor_obj) == 0){
+			
+
+			//get the donor & donee id's, either from DB or from cache
+	                $donor_obj = [];
+                	if(array_key_exists('full_name', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['full_name'] == $full_name)){
+				$donor_id = self::$bulk['quasi_cache']['donor_id'];
+				$donee_id = self::$bulk['quasi_cache']['donee_id'];
+                	} else {
+                        	$donor_obj = org::search(['org.name' => $full_name]);
+				if(count($donor_obj) == 0){
+	                                //weren't able to find pharmacy name
+        	                        return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find Pharmacy with the name: $full_name . Might be under slightly differnt sirum.org name"]);
+                	        } else {
+                        	        //return self::$bulk['alerts'][] = array_merge($data, [$donor_obj[0]->id]);
+                                	//self::$bulk['quasi_cache']['full_name'] = $donor_obj[0]->name; //change cached name
+					$donor_id = $donor_obj[0]->id;
+					//self::$bulk['quasi_cache']['donor_id'] = $donor_id;
+                                	$donations_obj = donation::search(['donor_id' => $donor_id]);
+                                	if(count($donations_obj) == 0){
+                                        	return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find any donations by $full_name that exist. Please create one in V1 (by making a new label) to their appropriate recipient."]);
+                                	}	else {
+                                        	$donee_id = $donations_obj[0]->donee_id;
+                                	}
+                       		 }
+				self::$bulk['quasi_cache']['donee_id'] = $donee_id;
+                                 self::$bulk['quasi_cache']['donor_id'] = $donor_id; //change cached donor id
+				self::$bulk['quasi_cache']['full_name'] = $donor_obj[0]->name; //change cached name
+                	}
+
+
+			//$donor_obj = org::search(['org.name' => $full_name]);
+			/*if(count($donor_obj) == 0){
 				//weren't able to find pharmacy name
-				return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find Pharmacy with that $full_name . Might be under slightly differnt sirum.org name"]);	
+				return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find Pharmacy with the name: $full_name . Might be under slightly differnt sirum.org name"]);	
 			} else {
 				//return self::$bulk['alerts'][] = array_merge($data, [$donor_obj[0]->id]);	
 				$donor_id = $donor_obj[0]->id;
 				$donations_obj = donation::search(['donor_id' => $donor_id]);
 				if(count($donations_obj) == 0){
-					return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find any donations by this pharmacy that exist. Please create one in V1 (by making a new label) to their appropriate recipient."]);	
+					return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find any donations by $full_name that exist. Please create one in V1 (by making a new label) to their appropriate recipient."]);	
 				} else {
 					$donee_id = $donations_obj[0]->donee_id;
 				}
-			}
+			}*/
 		}
 
 
@@ -486,7 +563,10 @@ class inventory extends MY_Model
 
 		$looked_up_by_name = false;
 		//Look up the uploaded NDC in our database.
-		$items = item::search(['upc' => $ndc]);
+		$items = [];
+		if(strlen($ndc) > 0){
+			$items = item::search(['upc' => $ndc]);
+		}
 		if(count($items) == 0){
 			$items = item::search(['name' => $name]);
 			$looked_up_by_name = true;
@@ -571,6 +651,8 @@ class inventory extends MY_Model
 					$donors = org::search(['phone' => $donor_phone]);
 					$donees = org::search(['phone' => $donee_phone]);
 
+					self::$bulk['alerts'][] = ["Donation had to be created for a V2 Import with tracking number $tracking_num"];
+
 					//If we can't find a donor then we can't add the donation/shipment.  Don't think we should automatically create an org
 					if (count($donors) == 0)
 						return self::$bulk['alerts'][] = array_merge($data, ["Row $row: donor phone $donor_phone did not have any matches"]);
@@ -611,9 +693,27 @@ class inventory extends MY_Model
 			'archived'		=> date::format($archived, DB_DATE_FORMAT),
 		]);
 
+		self::$bulk['upload'][] =
+		[
+			'row' => $row,
+			'donation_id'	=> $donations[0]->donation_id,
+			'item_id'     => $items[0]->id,
+			'dispensed'		=> $qty,
+			'ndc'        => $ndc,
+			'verb'       => $qty > 0 ? 'increased' : 'decreased',
+			'org_id'      => $donations[0]->donee_id,
+			'price' 	 		=> $items[0]->price ? $items[0]->price : 0,
+			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
+			'price_type' 	=> $items[0]->price_type,
+			'exp_date'		=> date::format($exp, DB_DATE_FORMAT),
+			'archived'		=> date::format($archived, DB_DATE_FORMAT),
+		];
+
+
 		//We use $archived to designate if the item was accept by the donee into inventory.  If it was accepted
 		//then we need to increment our inventory of this drug by the qty we just added
 		if ( ! $archived)
 			self::increment(['org_id' => $donations[0]->donee_id, 'item_id' => $items[0]->id], $qty);
 	}
 }  // END OF CLASS
+

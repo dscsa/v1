@@ -14,7 +14,7 @@
 | path to your installation.
 |
 */
-$config['base_url']	= 'http://localhost/v1/url/index.php';
+$config['base_url']	= '';
 
 /*
 |--------------------------------------------------------------------------
