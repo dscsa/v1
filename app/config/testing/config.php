@@ -228,7 +228,7 @@ $config['cache_path'] = '';
 */
 
 $config['encryption_key'] = '53sS10nP45swOrD';
-$config['aws_volume'] = 'vol-7fe8d45e';
+$config['aws_volume'] = 'vol-9158d1fd';
 
 /*
 |--------------------------------------------------------------------------
