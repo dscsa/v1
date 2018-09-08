@@ -62,6 +62,7 @@ class Inventory_controller extends MY_Controller
 				//fill it with the error rows (with error description in last column)
 				$success .= 'Following unique errors:';
 				$output = fopen($filepath, 'w');
+				//chmod($filepath,0777);
 				for($i = 0; $i < count(inventory::$bulk['alerts']); $i++){
 					 $error_text = array_values(array_slice(inventory::$bulk['alerts'][$i], -1))[0];
 					if(strpos($error_text,"Donation had to be created") === false){
@@ -93,8 +94,8 @@ class Inventory_controller extends MY_Controller
 			}
 			$total_rows = $num_errors + count(inventory::$bulk['upload']);
 			$percent_errors = 100 * $num_errors / $total_rows;
-			$success .= "<br>".$num_errors."::".count(inventory::$bulk['upload']);
-			$success .= "<br> Percentage of errors roughly $percent_errors%";
+			//$success .= "<br>".$num_errors."::".count(inventory::$bulk['upload']);
+			$success .= "<br><br> Percentage of errors roughly $percent_errors%";
 			$v['message'] = html::info($success, '', ['style' => 'text-align:left']);
 			
 			if ((count(inventory::$bulk['alerts']) > 6) || ((count(inventory::$bulk['alerts']) > 1) && (strlen(inventory::$bulk['pharmericaMonth']) == 0))){

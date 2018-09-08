@@ -466,7 +466,7 @@ class inventory extends MY_Model
 				if(count($m) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Filename must have actual SIRUM tracking number (last 6 or full 15 digits) or needs a column titled 'tracking_num'"]);
 				} else {
-					$tracking_num = $m[0];
+					$tracking_num = '971424215'.$m[0];
 				}
 			} else {
 				$tracking_num = $m[0];
