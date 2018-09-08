@@ -332,15 +332,19 @@ class inventory extends MY_Model
 	//An associative array of fields, and the row#
 	function import($data, $row)
 	{
+		set_time_limit(5);
 		if($row > 500){
                         return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 		}
 
-		if($row % 100 == 0){
+		if($row % 50 == 0){
+			header("Refresh:0");
+			//header("HTTP/1.0 102 Processing");	
 			//echo "Processing<br>";
 			//flush();
-			//print_r("...");
+			//print_r("...<br>");
 			//ob_flush();
+			//ob_start();
 			//return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 		}
 
@@ -623,10 +627,25 @@ class inventory extends MY_Model
 		//$donations = donation::search(['date_verified' => $date_verified]);
 		$donations = [];
 		if(!self::isPharmerica()){ //If not Pharmerica, then use tracking number
-			$donations = donation::search(['tracking_number' => $tracking_num]);
+			if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['donation']->tracking_number == $tracking_num)){
+				$donations = self::$bulk['quasi_cache']['donation'];
+			} else {
+				$donations = donation::search(['tracking_number' => $tracking_num]);	
+                              self::$bulk['quasi_cache']['donation'] = $donations;
+
+			}
 		} else { //If pharmerica, lookup by dummy tracking number name
 			//look up with pharmacy donor id and the placeholder name format ('Viewmaster_January_2018')
-			$donations = donation::search(['donor_id' => $donor_id, 'tracking_number' => 'Viewmaster_'.self::$bulk['pharmericaMonth']]);
+                        if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['donation']->tracking_number == 'Viewmaster_'.self::$bulk['pharmericaMonth'])){
+                                $donations = self::$bulk['quasi_cache']['donation'];
+                        	                                //self::$bulk['quasi_cache']['donation'] = $donations[0];
+
+
+			} else {
+					
+                        	$donations = donation::search(['donor_id' => $donor_id, 'tracking_number' => 'Viewmaster_'.self::$bulk['pharmericaMonth']]);
+				self::$bulk['quasi_cache']['donation'] = $donations;
+			}
 		}
 
 		//If donation is not in the DB then try to create it for V2 or Pharmerica ONLY

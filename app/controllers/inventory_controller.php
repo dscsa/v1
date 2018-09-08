@@ -53,6 +53,7 @@ class Inventory_controller extends MY_Controller
 		{
 
 			item::csv('inventory', 'import');
+			//header("Refresh:0");
 			$success = '';
 			$error_arr = [];
 			$num_errors = 0;
