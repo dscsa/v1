@@ -18,7 +18,7 @@
  * NOTE: If you change these, also change the error_reporting() code below
  *
  */
-	define('ENVIRONMENT', 'testing');
+	define('ENVIRONMENT', 'development');
 /*
  *---------------------------------------------------------------
  * ERROR REPORTING
@@ -39,7 +39,7 @@
 		break;
 
 		case 'production':
-			error_reporting(E_ALL);
+			error_reporting(0);
 		break;
 
 		default:
