@@ -14,7 +14,7 @@
 | path to your installation.
 |
 */
-$config['base_url']	= 'https://test.sirum.org/';
+$config['base_url']	= '';
 
 /*
 |--------------------------------------------------------------------------
