@@ -221,7 +221,10 @@ class inventory extends MY_Model
 
 			if ($value == 'Qty') //Coleman
 				self::$bulk['qty'] = $index;
-
+			
+			if(strpos(strtolower($value),'qty') !== false)
+				self::$bulk['qty'] = $index;
+		
 			if ($value == 'Return Quantity') //Pharmerica
 				self::$bulk['qty'] = $index;
 
@@ -452,10 +455,10 @@ class inventory extends MY_Model
 		if(!$qty){
 			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
 		}
-
-
-		$name = $data[self::$bulk['name']];
-
+		$name = '';
+		if(array_key_exists('name', self::$bulk)){
+			$name = $data[self::$bulk['name']];
+		}
 		//If there is a tracking number column, use it
 		if(array_key_exists('tracking_num', self::$bulk)){
 			$tracking_num = $data[self::$bulk['tracking_num']];
@@ -569,6 +572,7 @@ class inventory extends MY_Model
 		//Look up the uploaded NDC in our database.
 		$items = [];
 		if(strlen($ndc) > 0){
+			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
 			$items = item::search(['upc' => $ndc]);
 		}
 		if(count($items) == 0){
@@ -580,9 +584,9 @@ class inventory extends MY_Model
 		if (count($items) == 0)
 		{
 			//We can only create a drug if we were provided a drug name.
-			if (!$name)
+			if (!$name OR strlen($name) === 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not found and no name field was provided (column can be drug.generic, Drug Name, Drug Label Name"]);
-			if(!$ndc)
+			if(!$ndc OR strlen($name) === 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $name was not found and no ndc field was provided"]);
 
 			$upc = '';
