@@ -332,18 +332,18 @@ class inventory extends MY_Model
 	//An associative array of fields, and the row#
 	function import($data, $row)
 	{
-		set_time_limit(5);
-		if($row > 500){
+		//set_time_limit(5);
+		if($row > 2500){
                         return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
-		}
+			}
 
 		if($row % 50 == 0){
-			header("Refresh:0");
+			//header("Refresh:0");
 			//header("HTTP/1.0 102 Processing");	
-			//echo "Processing<br>";
-			//flush();
-			//print_r("...<br>");
-			//ob_flush();
+			echo "Processing row: ".$row."<br>";
+			flush();
+			print_r("...<br>");
+			ob_flush();
 			//ob_start();
 			//return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 		}
