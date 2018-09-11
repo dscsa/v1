@@ -337,7 +337,7 @@ class inventory extends MY_Model
 	{
 		//set_time_limit(5);
 		if($row > 2500){
-                        return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
+                       return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 			}
 
 		if($row % 50 == 0){
