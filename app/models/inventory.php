@@ -707,7 +707,7 @@ class inventory extends MY_Model
 		self::create([
 			'donation_id'	=> $donations[0]->donation_id,
 			'item_id'     => $items[0]->id,
-			'donee_qty'		=> $qty,
+			'donor_qty'		=> $qty,
 			'org_id'      => $donations[0]->donee_id,
 			'price' 	 		=> $items[0]->price ? $items[0]->price : 0,
 			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
