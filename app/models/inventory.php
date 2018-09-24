@@ -703,6 +703,13 @@ class inventory extends MY_Model
 			}
 		}
 
+		$archived_date = '';
+		if(strlen($archived) == 0){
+			$archived_date = date('Y-m-d H:i:s');
+		} else {
+			$archived_date = date::format($archived, DB_DATE_FORMAT);
+		}
+	
 		//Ok Item should have exactly one drug and one donation/shipment at this point so we should be able to add
 		self::create([
 			'donation_id'	=> $donations[0]->donation_id,
@@ -713,7 +720,7 @@ class inventory extends MY_Model
 			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
 			'price_type' 	=> $items[0]->price_type,
 			'exp_date'		=> date::format($exp, DB_DATE_FORMAT),
-			'archived'		=> date::format($archived, DB_DATE_FORMAT),
+			'archived'		=> $archived_date //date::format($archived, DB_DATE_FORMAT),
 		]);
 
 		self::$bulk['upload'][] =
