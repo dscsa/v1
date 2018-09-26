@@ -340,7 +340,7 @@ class inventory extends MY_Model
                        return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 			}
 
-		if($row % 50 == 0){
+		if($row % 10 == 0){
 			//header("Refresh:0");
 			//header("HTTP/1.0 102 Processing");	
 			echo "Processing row: ".$row."<br>";
@@ -484,13 +484,14 @@ class inventory extends MY_Model
 
 
 		$donor_id = $donee_id = ''; //only using these if pharmerica
-
+		$full_name = '';
+		$is_new_facility = False;
 		//for pharmerica, on each row, need to get donor and donee ids
 		if(self::isPharmerica()){
 			//month is self::$bulk['pharmericaMonth'] name is self::$bulk['pharmacy_name']
 			//use name to find the donor id
 			//get the latest donation with that donor id, take the donee id
-			$full_name = '';
+			//$full_name = '';
 
 			//double check for weird pharmerica names that are different in their data vs theri viewmsater data
 			if(strtolower($data[self::$bulk['pharmacy_name']]) == "colorado sprngs"){ //THIS IS A TYPEO IN THEIR VIEWMASTER DATA for some reason
@@ -508,6 +509,7 @@ class inventory extends MY_Model
 				$donor_id = self::$bulk['quasi_cache']['donor_id'];
 				$donee_id = self::$bulk['quasi_cache']['donee_id'];
                 	} else {
+				$is_new_facility = True;
                         	$donor_obj = org::search(['org.name' => $full_name]);
 				if(count($donor_obj) == 0){
 	                                //weren't able to find pharmacy name
@@ -526,10 +528,11 @@ class inventory extends MY_Model
                        		 }
 				self::$bulk['quasi_cache']['donee_id'] = $donee_id;
                                  self::$bulk['quasi_cache']['donor_id'] = $donor_id; //change cached donor id
-				self::$bulk['quasi_cache']['full_name'] = $donor_obj[0]->name; //change cached name
+				self::$bulk['quasi_cache']['full_name'] = $full_name; //$donor_obj[0]->name; //change cached name
                 	}
 
-
+			//echo self::$bulk['quasi_cache']['full_name'];
+			//flush();
 			//$donor_obj = org::search(['org.name' => $full_name]);
 			/*if(count($donor_obj) == 0){
 				//weren't able to find pharmacy name
@@ -640,8 +643,11 @@ class inventory extends MY_Model
 			}
 		} else { //If pharmerica, lookup by dummy tracking number name
 			//look up with pharmacy donor id and the placeholder name format ('Viewmaster_January_2018')
-                        if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['donation']->tracking_number == 'Viewmaster_'.self::$bulk['pharmericaMonth'])){
-                                $donations = self::$bulk['quasi_cache']['donation'];
+                        //if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['full_name'] == $full_name) AND (self::$bulk['quasi_cache']['donation']->tracking_number == 'Viewmaster_'.self::$bulk['pharmericaMonth'])){
+                        if(!$is_new_facility){ 
+			       //echo "HERE";
+				//flush();
+				$donations = self::$bulk['quasi_cache']['donation'];
                         	                                //self::$bulk['quasi_cache']['donation'] = $donations[0];
 
 
