@@ -719,7 +719,7 @@ class fedex extends MY_Library
 |
 */
 
-	function org_pickup($org, $start = '', $date = '', $location = '')
+	function org_pickup($org, $start = '', $date = '', $location = '', $contact_name = '', $package_count = '')
 	{
 		for($i = 0; $i < 5; $i++)
 		{
@@ -747,7 +747,7 @@ echo print_r($window, true);
 
 		$request = array
 		(
-			'PackageCount' 			=> '1',
+			'PackageCount' 			=> $package_count ?: '1',
 			'TotalWeight' 				=> ['Value' => '10.0', 'Units' => 'LB'],
 			'CarrierCode' 				=> 'FDXG',
 			'CourierRemarks' 			=> "SIRUM Box @ $location",
@@ -758,7 +758,7 @@ echo print_r($window, true);
 				(
 					'Contact' => array
 					(
-						'PersonName'   => $org->user_name,
+						'PersonName'   => $contact_name ?: $org->user_name,
 						'CompanyName'	=> "$org->org_name by SIRUM",
 						'PhoneNumber'  => '6504887434' //MUST BE NUMBER e.g. NOT THE FOLLOWING "SIRUM:".PHONE." PICKUP:$org->phone"
 					),

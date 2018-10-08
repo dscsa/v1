@@ -387,7 +387,7 @@ class inventory extends MY_Model
 	  			$word_month = self::translate_num_to_month($raw_month);
 	  			$year = date("Y");
 	  			self::$bulk['pharmericaMonth'] =  $word_month.'_'.$year;
-	  			self::$bulk['shippedHolder'] = date::format($raw_month.'/01/'.$year, DB_DATE_FORMAT);
+	  			self::$bulk['shippedHolder'] = date::format($raw_month.'/01/'.$year.' 10:00:00', DB_DATE_FORMAT);
 	  		} else if($row == 6){
 	  			self::setFields($data);
 	  			return self::$bulk['alerts'][] = array_merge($data, ['error']);
@@ -578,7 +578,9 @@ class inventory extends MY_Model
 			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
 			$items = item::search(['upc' => $ndc]);
 		}
+		
 		if(count($items) == 0){
+			$name = str_replace("?","%",$name);
 			$items = item::search(['name' => $name]);
 			$looked_up_by_name = true;
 		}

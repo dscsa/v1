@@ -115,11 +115,11 @@ Front Office            Nursing Station            DON Office            Other _
 		];
 	}
 	
-	function pickup($org_id, $start = '', $date = '', $location = '')
+	function pickup($org_id, $start = '', $date = '', $location = '', $contact_name = '', $package_count = '')
 	{
 		$org = org::find($org_id);
 		
-		$pickup = fedex::org_pickup($org, $start, $date, $location);
+		$pickup = fedex::org_pickup($org, $start, $date, $location, $contact_name, $package_count);
 
 		if ($pickup['error']) {
 			$msg = log::error("Pickup not scheduled for $org->org_name on $date: ".print_r($pickup['error'], true));
