@@ -580,7 +580,6 @@ class inventory extends MY_Model
 		}
 		
 		if(count($items) == 0){
-			$name = str_replace("?","%",$name);
 			$items = item::search(['name' => $name]);
 			$looked_up_by_name = true;
 		}
