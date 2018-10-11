@@ -496,9 +496,7 @@ class inventory extends MY_Model
 			//double check for weird pharmerica names that are different in their data vs theri viewmsater data
 			if(strtolower($data[self::$bulk['pharmacy_name']]) == "colorado sprngs"){ //THIS IS A TYPEO IN THEIR VIEWMASTER DATA for some reason
 				$full_name = "Pharmerica Colorado Springs";
-			} else if(strtolower($data[self::$bulk['pharmacy_name']]) == "des moines"){
-				$full_name = "Pharmerica Urbandale";
-		    } else {
+			} else {
 				$full_name = "Pharmerica ".$data[self::$bulk['pharmacy_name']]; //then they refer to themselves the same way
 			}
 			
