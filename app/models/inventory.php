@@ -580,6 +580,9 @@ class inventory extends MY_Model
 		if(count($items) == 0){
 			$items = item::search(['name' => $name]);
 			$looked_up_by_name = true;
+			if(count($items) == 0){
+				$items = item::search(['description' => $name]);
+			}
 		}
 
 		//If the NDC does not yet exist, try to create a new drug with it.
