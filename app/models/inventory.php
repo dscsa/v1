@@ -222,8 +222,8 @@ class inventory extends MY_Model
 			if ($value == 'Qty') //Coleman
 				self::$bulk['qty'] = $index;
 			
-			if(strpos(strtolower($value),'qty') !== false)
-				self::$bulk['qty'] = $index;
+			//if(strpos(strtolower($value),'qty') !== false)
+			//	self::$bulk['qty'] = $index;
 		
 			if ($value == 'Return Quantity') //Pharmerica
 				self::$bulk['qty'] = $index;
@@ -418,13 +418,16 @@ class inventory extends MY_Model
 
 		//GET ALL THE ITEMS OUT OF THE ROW FIRST
 		if(self::isV2()){ //IF A v2 CSV
-			$donation_id = explode('.', $data[self::$bulk['donation_id']]);
-			if (count($donation_id) == 3) {
-			  list($donee_phone, $date_verified, $donor_phone) = $donation_id;
+			$donation_id = explode(';', $data[self::$bulk['donation_id']]);
+			if (count($donation_id) == 2) {
+			  	$donor_phone = explode('.',$donation_id[0])[0];
+                                $donee_phone = explode('.',$donation_id[1])[0];
+                                $date_verified = explode('.',$donation_id[0])[1];
+				//list($donee_phone, $date_verified, $donor_phone) = $donation_id;
 			} else if (count($donation_id) == 1) {
 				return;  //skip repackaged items without an error (shipment.id = recipient phone)
 			} else {
-				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: could not parse shipment._id.  It should have 0 or 2 periods"]);
+				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: could not parse shipment._id.  It should have <donor_phone>.<date_ver>;<donee_phone>.<date_ver>"]);
 			}
 
 			//Format Date appropriately
@@ -462,6 +465,9 @@ class inventory extends MY_Model
 		//If there is a tracking number column, use it
 		if(array_key_exists('tracking_num', self::$bulk)){
 			$tracking_num = $data[self::$bulk['tracking_num']];
+			if(self::isV2()){
+				$tracking_num = substr($tracking_num, 7); //because of how v2 adds seven extra digits to the front
+			}
 		}
 
 		//if there was no tracking number in the columns and if they're not pharmerica
