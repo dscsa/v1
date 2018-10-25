@@ -10,22 +10,52 @@ class Admin_controller extends MY_Controller
 |
 */
 
-	function index()
+function index()
+{
+	user::login($org_id, 'admin');
+
+	if (valid::and_submit('import'))
 	{
-		user::login($org_id, 'admin');
-
-		if (valid::form())
+		item::csv('admin', 'import');
+		if (admin::$bulk['alerts']) //There shouldn't be many errors, since we'll force name matching earlier on in workflow
 		{
-			self::_index();
+			echo "ERRORS IN CSV:<br>";
+			for($i = 0; $i < count(admin::$bulk['alerts']); $i++){
+				$row = admin::$bulk['alerts'][$i];
+				echo "DONOR: ".$row[0]."; DONEE: ".$row[1]."; ERROR: ".$row[3]."<br>";
+			}
+			echo "Fix/remove the corresponding rows, then retry. To reload the page, hit enter in url bar, instead of refreshing.<br>";
+		} else { //only generate labels if there are no errors
+
+			$file_path_2d_arr = [];
+			foreach (admin::$bulk['upload'] as $row => $data)
+			{
+				$donor_id = $data['donor_id'];
+				$donee_id = $data['donee_id'];
+				$num_labels = $data['num_labels'];
+				$res = self::_index($donor_id, $donee_id, $num_labels, "donation"); //last field is label_type, which we assume is donation
+				array_push($file_path_2d_arr, $res);
+			}
+
+			
+			$final_file = pdf::merge($file_path_2d_arr);
+			file::download('label',$final_file);
 		}
+	}
 
-		$per_page = result::$per_page;
 
-		result::$per_page = 9999;
+	if (valid::and_submit('create'))
+	{
+		self::_index();
+	}
 
-		$v = array
-		(
-			'users' 		=> org::options('{org_name} ({registered})', [], '{org_id}'),
+	$per_page = result::$per_page;
+
+	result::$per_page = 9999;
+
+	$v = array
+	(
+		'users' 		=> org::options('{org_name} ({registered})', [], '{org_id}'),
 			'label_types'   =>
 			[	'donation label' => 'Donation Label'
 			,	'label only' 	  => 'Label Only'
@@ -37,7 +67,108 @@ class Admin_controller extends MY_Controller
 		view::full('admin', 'Labels', $v);
 	}
 
-	function _index()
+	//Actually generates the labels, barely modified version of the old _index function so
+	//that it can take in values useful for mass label creation.
+	function _index($donor_id = '', $donee_id = '', $num_labels = 0, $label_type = '')
+	{
+		$manual = false;
+
+		//If manual, then these values are empty, so set them to appropriate values
+		if(! $donor_id){
+			$manual = true;
+			$donor_id = data::post('donor_id');
+		}
+		
+		if(! $donee_id){
+			$donee_id = data::post('donee_id');
+		}
+
+		if(!$num_labels){
+			$num_labels = 1;
+		}
+
+		if(!$label_type){
+			$label_type = data::post('label_type');
+		}
+
+		$result_arr = [];
+		
+		
+		for ($i = 0; $i < $num_labels; $i++){
+			//create labels, return array of the pdf locations
+			if ($label_type == 'label only')
+			{
+				$donor = org::find($donor_id);
+
+				$donee = org::find($donee_id);
+
+				//we need to fake a donation since we don't want to create one
+				$donation = (object) array
+				(
+					'donation_id'  => 'none',
+					'donor_id' 		=> $donor->org_id,
+					'donor_org' 	=> $donor->org_name,
+					'donor_street' => $donor->street,
+					'donor_city' 	=> $donor->city,
+					'donor_state' 	=> $donor->state,
+					'donor_zip' 	=> $donor->zipcode,
+					'donor_instructions' => $donor->instructions,
+					'donee_instructions' => $donee->instructions,
+					'donee_id' 		=> $donee->org_id,
+					'donee_org' 	=> $donee->org_name,
+					'donee_street' => $donee->street,
+					'donee_city' 	=> $donee->city,
+					'donee_state'	=> $donee->state,
+					'donee_zip' 	=> $donee->zipcode
+				);
+
+				//Don't want to get a cached label
+				file::delete('label', donation::reference($donation).'_label.pdf');
+			}
+			else
+			{
+				$donation_id = donation::create(compact('donor_id', 'donee_id'));
+
+				//Orginially user tables were joined to that donation/index, record/donated, & record/destroyed could have full org tooltips.
+				//the full query was taking 15-35secs to execute, so removing tooltips from these views.  Instead only get full org/user data
+				//when are are looking at a specific donation!
+				//Even with above donation query of ~200 items was taking 1 sec, and without it, .05 secs.  This makes a different for logging speed.
+				/*$this->db->select('donee_user.name as donee_user, donee_user.email as donee_email, donor_user.name as donor_user, donor_user.email as donor_email');*/
+	      $this->db
+				  ->select('(SELECT name  FROM user WHERE user.org_id = donee_org.id ORDER BY user.current_login DESC LIMIT 1) as donee_user')
+					->select('(SELECT name  FROM user WHERE user.org_id = donor_org.id ORDER BY user.current_login DESC LIMIT 1) as donor_user')
+					->select('(SELECT email FROM user WHERE user.org_id = donee_org.id ORDER BY user.current_login DESC LIMIT 1) as donee_email')
+					->select('(SELECT email FROM user WHERE user.org_id = donor_org.id ORDER BY user.current_login DESC LIMIT 1) as donor_email');
+				/*$this->db->join('user as donee_user', 'donee_user.org_id = donee_org.id', 'left');
+				$this->db->join('user as donor_user', 'donor_user.org_id = donor_org.id', 'left');
+				$this->db->join('user as donee_last', 'donee_last.org_id = donee_org.id AND donee_user.current_login < donee_last.current_login', 'left');
+				$this->db->join('user as donor_last', 'donor_last.org_id = donor_org.id AND donor_user.current_login < donor_last.current_login', 'left');
+
+				$this->db->where('donee_last.id is null');
+				$this->db->where('donor_last.id is null');*/
+
+				$donation = donation::find($donation_id);
+
+				//echo $this->db->last_query();
+				//print_r($donation);
+			}
+
+			$file = donation::label($donation); //filepath to the label	
+			//TODO: Handle errors here if theres a FEDEX error, and don't add it to array as a filename.	
+			array_push($result_arr,$file);
+		}
+
+		if($manual){
+			//download directly
+			file::download('label', $file);
+		} else {
+			//return array of filenames to be used in merging & then downloading
+			return $result_arr;
+		}
+		
+	}
+
+	function deprecated_index()
 	{
 
 		$donor_id = data::post('donor_id');

@@ -1,5 +1,7 @@
 <?=
-	form::open(),
+
+	form::open('', ['class' => 'togglecontainer', 'style' => 'white-space:nowrap'])
+	         ->upload('upload', 'Import', 'floatright avia-color-theme-color-subtle',['hidden' => true, 'onchange' => 'this.form.submit()']),
 
 	html::label(form::dropdown("donor_id", '0', $users, 'tall wide'), 'From')
 

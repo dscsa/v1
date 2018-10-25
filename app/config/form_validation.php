@@ -393,7 +393,14 @@
 			'field' => 'label_type',
 			'label' => 'label type',
 			'rules' => 'required'
+		),
+		array
+		(
+			'field' => 'upload',
+			'label' => 'File',
+			'rules' => 'upload[txt, csv]'
 		)
+		
 	);
 
 

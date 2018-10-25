@@ -107,4 +107,51 @@ class admin extends MY_Model
 		}
 	}
 
+	static $bulk  =
+	[
+		'alerts' => [],
+		'upload' => [],
+	];
+
+/**
+| -------------------------------------------------------------------------
+| Import
+|-------------------------------------------------------------------------
+| Reads the import csv for mass label creation
+|
+*/
+
+	function import($data,$row)
+	{
+			if($row > 1){
+	
+				list($donor_name, $donee_name, $num_labels) = $data; //get variables, force user to use three columns in order
+
+				$donor_obj = org::search(['org.name' => $donor_name]);
+				if(count($donor_obj) == 0){
+					return self::$bulk['alerts'][] = array_merge($data, ["Donor name doesn't match V1"]);	
+				}
+				$donee_obj = org::search(['org.name' => $donee_name]);
+				if(count($donee_obj) == 0){
+					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);	
+				}
+
+				$donor_id = $donor_obj[0]->id;
+				$donee_id = $donee_obj[0]->id;
+
+				$donee_approved = $donee_obj[0]->approved;
+				if(strpos($donee_approved, ';'.$donor_id.';') !== false){ //then they are approved
+					self::$bulk['upload'][] =
+					[
+						'donor_id' => $donor_id,
+						'donee_id' => $donee_id,
+						'num_labels' => $num_labels,
+					];
+				} else {
+					return self::$bulk['alerts'][] = array_merge($data, ["Donee not approved"]);	
+				}
+			}
+	}
+
+
 }  // END OF CLASS

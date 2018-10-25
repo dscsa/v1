@@ -96,6 +96,43 @@ class Pdf
 	}
 
 /**
+| Merge
+| 
+| Takes a 2D array of batches of filenames. Each batch (one of the 1D arrays) will get collated
+| and between each batch it adds some blank pages so it can all be printed out together
+| while making it easy to separate.
+**/
+
+	function merge($full_arr)
+	{
+		require_once('../app/libraries/pdf/fpdi.php');
+		$pdf = new FPDI('P', 'mm', 'Letter');
+                $filename = "merged_".date("m_d_Y_h_i").".pdf";
+		$filepath = file::path('label', $filename);
+		
+		foreach($full_arr as $row => $batch){
+			//ADD 6 BLANK PAGES so that people in office can separate batches
+			$pdf->AddPage('P');
+                        $pdf->AddPage('P');
+                        $pdf->AddPage('P');
+			$pdf->AddPage('P');
+                        $pdf->AddPage('P');
+                        $pdf->AddPage('P');
+			foreach($batch as $row => $file){
+				$pdf->setSourceFile(file::path('label',$file));
+				for($i = 1; $i <= 2; $i++){
+					$pdf->AddPage('P');
+					$tpl = $pdf->importPage($i);
+					$pdf->useTemplate($tpl);
+				}
+			}
+		}
+		$pdf->Output($filepath, "F");
+		return $filename;
+	}
+
+
+/**
 | -------------------------------------------------------------------------
 | Label
 | -------------------------------------------------------------------------
