@@ -148,7 +148,7 @@ class admin extends MY_Model
 						'num_labels' => $num_labels,
 					];
 				} else {
-					return self::$bulk['alerts'][] = array_merge($data, ["Donee not approved"]);	
+					return self::$bulk['alerts'][] = array_merge($data, ["Recipient has not approved this donor."]);	
 				}
 			}
 	}

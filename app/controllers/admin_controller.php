@@ -33,7 +33,7 @@ function index()
 				$donor_id = $data['donor_id'];
 				$donee_id = $data['donee_id'];
 				$num_labels = $data['num_labels'];
-				$res = self::_index($donor_id, $donee_id, $num_labels, "donation"); //last field is label_type, which we assume is donation
+				$res = self::_index($donor_id, $donee_id, $num_labels, "donation",false);
 				array_push($file_path_2d_arr, $res);
 			}
 
@@ -46,7 +46,11 @@ function index()
 
 	if (valid::and_submit('create'))
 	{
-		self::_index();
+		$donor_id = data::post('donor_id');
+                $donee_id = data::post('donee_id');
+		$num_labels = 1;
+                $label_type = data::post('label_type');
+		self::_index($donor_id, $donee_id, $num_labels, $label_type, true);
 	}
 
 	$per_page = result::$per_page;
@@ -69,28 +73,8 @@ function index()
 
 	//Actually generates the labels, barely modified version of the old _index function so
 	//that it can take in values useful for mass label creation.
-	function _index($donor_id = '', $donee_id = '', $num_labels = 0, $label_type = '')
+	function _index($donor_id, $donee_id, $num_labels, $label_type, $manual)
 	{
-		$manual = false;
-
-		//If manual, then these values are empty, so set them to appropriate values
-		if(! $donor_id){
-			$manual = true;
-			$donor_id = data::post('donor_id');
-		}
-		
-		if(! $donee_id){
-			$donee_id = data::post('donee_id');
-		}
-
-		if(!$num_labels){
-			$num_labels = 1;
-		}
-
-		if(!$label_type){
-			$label_type = data::post('label_type');
-		}
-
 		$result_arr = [];
 		
 		
