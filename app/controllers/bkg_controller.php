@@ -47,6 +47,11 @@ class Bkg_controller extends MY_Controller
 	{
 		//Typically run at the beginning of every hour
 		//but can change this within crontab on server
+		$curr_hour = intval(gmdate('H'));
+		if(($curr_hour < 4) || ($curr_hour > 10)){ //do not check during 4am-10am GMT (9pm-3am PT, 12am-6am ET)
+			bkg::donation('track');
+		}
+
 		bkg::donation('track');
 
 		// Run daily at 3am GMT / 7pm PT / 4pm ET. Fedex

@@ -310,17 +310,26 @@ class donation extends MY_Model
 		$per_page = result::$per_page;
 
 		result::$per_page = 9999;
+		
+		//start of OS modifications
+		//check that 'created' is in the past 5 years
+		//check that the tracking number is a 15 digit SIRUM standard (not Viewmaster or empty)
+		//check that date verified is NULL
+		//check that date received is NULL
+		$created_cutoff = date('Y-m-d H:i:s',strtotime('-3 year'));
+		$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
+		//print_r(count($donations));
+		//return;
 
-		$donations = self::_search(['date_received IS NULL' => NULL]);
-
+		//end of OS modifications
 		result::$per_page = $per_page;
 		//End Hack
 
 		log::info("Tracking ".count($donations)." donations");
 
-		if (count($donations) == 9999)
+		/*if (count($donations) == 9999)
 			admin::email('Tracking Max Number of Donations', 'More than 9999 unreceived donations.  Only searching for the first 9999. '.$this->db->last_query());
-
+		*/
 		foreach($donations as $donation)
 		{
 			$track = fedex::track($donation->tracking_number);
