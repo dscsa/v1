@@ -52,8 +52,6 @@ class Bkg_controller extends MY_Controller
 			bkg::donation('track');
 		}
 
-		bkg::donation('track');
-
 		// Run daily at 3am GMT / 7pm PT / 4pm ET. Fedex
 		// pickups should have happened & can be rescheduled
 		if($daily = gmdate('H') == '03')
