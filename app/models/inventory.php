@@ -275,6 +275,9 @@ class inventory extends MY_Model
 
  			 if ($value == 'tracking num')
  				self::$bulk['tracking_num'] = $index;
+			
+			if($value == 'date_str')
+				self::$bulk['date_str'] = $index;
 
  			if ($value == 'Pharmacy Name') //Pharmerica
  				self::$bulk['pharmacy_name'] = $index;
@@ -321,6 +324,7 @@ class inventory extends MY_Model
 	}
 
 
+
 	function isPharmerica(){
 		return strlen(self::$bulk['pharmericaMonth']) > 0;
 	}
@@ -329,13 +333,16 @@ class inventory extends MY_Model
 		return array_key_exists('donation_id', self::$bulk);
 	}
 
-
+	function isPolaris(){
+		return array_key_exists('date_str', self::$bulk);
+	}
 
 	//This is called from the inventory page only, at this point
 	//An associative array of fields, and the row#
 	function import($data, $row)
 	{
 		//set_time_limit(5);
+
 		if($row > 2500){
                        return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 			}
@@ -473,7 +480,7 @@ class inventory extends MY_Model
 		//if there was no tracking number in the columns and if they're not pharmerica
 		//then we need a tracking number in file name, else the whole thign won't work
 		if((!array_key_exists('tracking_num', self::$bulk)) AND !self::isPharmerica()){
-			preg_match('/([0-9]{15})/',$filename,$m); //if polaris this will match
+			preg_match('/([0-9]{15})/',$filename,$m); 
 			if(count($m) == 0){
 				preg_match('/([0-9]{6})/',$filename,$m); //if coleman this will match
 				if(count($m) == 0){
@@ -535,22 +542,6 @@ class inventory extends MY_Model
 				self::$bulk['quasi_cache']['full_name'] = $full_name; //$donor_obj[0]->name; //change cached name
                 	}
 
-			//echo self::$bulk['quasi_cache']['full_name'];
-			//flush();
-			//$donor_obj = org::search(['org.name' => $full_name]);
-			/*if(count($donor_obj) == 0){
-				//weren't able to find pharmacy name
-				return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find Pharmacy with the name: $full_name . Might be under slightly differnt sirum.org name"]);	
-			} else {
-				//return self::$bulk['alerts'][] = array_merge($data, [$donor_obj[0]->id]);	
-				$donor_id = $donor_obj[0]->id;
-				$donations_obj = donation::search(['donor_id' => $donor_id]);
-				if(count($donations_obj) == 0){
-					return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find any donations by $full_name that exist. Please create one in V1 (by making a new label) to their appropriate recipient."]);	
-				} else {
-					$donee_id = $donations_obj[0]->donee_id;
-				}
-			}*/
 		}
 
 
@@ -647,12 +638,38 @@ class inventory extends MY_Model
 		//$donations = donation::search(['date_verified' => $date_verified]);
 		$donations = [];
 		if(!self::isPharmerica()){ //If not Pharmerica, then use tracking number
-			if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['donation']->tracking_number == $tracking_num)){
+			if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['donation'][0]->tracking_number == $tracking_num)){
 				$donations = self::$bulk['quasi_cache']['donation'];
 			} else {
-				$donations = donation::search(['tracking_number' => $tracking_num]);	
-                              self::$bulk['quasi_cache']['donation'] = $donations;
-
+				//look up by tracking number or date_str if it's Polaris and there's no tracking number
+				if(self::isPolaris() AND !$tracking_num){		
+                                        $date_str =  $data[self::$bulk['date_str']];
+					if((array_key_exists('date_str', self::$bulk['quasi_cache'])) AND (self::$bulk['quasi_cache']['date_str'] == $date_str)){
+						$donations = self::$bulk['quasi_cache']['donation'];
+					} else {
+						//take date and look for it in the date_shipped window AND it has donor id for one Polaris
+						$polaris_ids = [1313,1338]; //tweek this in the future so that we can have this info in the row from GW's process
+						$temp_donations = [];
+						foreach($polaris_ids as $polaris_id){
+							$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
+                                 			       FROM (donation)
+                                        			WHERE `donation`.`donor_id` = ".$polaris_id.
+                                       				" AND `donation`.`date_shipped` BETWEEN '".$date_str." 00:00:00' AND '".$date_str." 23:59:59'");
+                        				if(count($temp_donations->result()) > 0){
+								$donations[] = $temp_donations->result()[0];
+								break;
+                        				}
+						}
+						if(count($donations) == 0){
+							return self::$bulk['alerts'][] = array_merge($data, ["NO POLARIS DONATIONS SHIPPED ON THIS DATE"]);
+						} else {
+							self::$bulk['quasi_cache']['donation'] = $donations;
+						}
+					}
+				} else { //then its V2,Coleman, or Polaris without a tracking number in that row and it uses just tracking number
+					$donations = donation::search(['tracking_number' => $tracking_num]);	
+                              		self::$bulk['quasi_cache']['donation'] = $donations;
+				}
 			}
 		} else { //If pharmerica, lookup by dummy tracking number name
 			//look up with pharmacy donor id and the placeholder name format ('Viewmaster_January_2018')
