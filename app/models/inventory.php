@@ -584,10 +584,15 @@ class inventory extends MY_Model
 		}
 		
 		if(count($items) == 0){
-			$items = item::search(['name' => $name]);
+			$temp_items = $this->db->query("SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
+					FROM (item)
+					WHERE `item`.`archived` = 0
+					AND `name` LIKE '".str_replace(" ","%",$name).
+					"' ORDER BY item.updated
+					LIMIT 1");
 			$looked_up_by_name = true;
-			if(count($items) == 0){
-				$items = item::search(['description' => $name]);
+			if(count($temp_items->result()) > 0){
+				$items[] = $temp_items->result()[0];
 			}
 		}
 
