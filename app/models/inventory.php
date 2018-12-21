@@ -579,7 +579,7 @@ class inventory extends MY_Model
 					FROM item
 					USE INDEX (name_fulltext)
 					WHERE `item`.`archived` = 0
-					AND `name` LIKE '".str_replace(" ","%",$name).
+					AND `name` LIKE '".addslashes(str_replace(" ","%",$name)).
 					"' ORDER BY item.updated DESC
 					LIMIT 1");
 			$looked_up_by_name = true;
@@ -675,7 +675,7 @@ class inventory extends MY_Model
 		} else { //If pharmerica, lookup by dummy tracking number name
 			//look up with pharmacy donor id and the placeholder name format ('Viewmaster_January_2018')
                         //if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['full_name'] == $full_name) AND (self::$bulk['quasi_cache']['donation']->tracking_number == 'Viewmaster_'.self::$bulk['pharmericaMonth'])){
-                        if(!$is_new_facility){ 
+                        if((!$is_new_facility) AND (array_key_exists('donation', self::$bulk['quasi_cache']))){ 
 			       //echo "HERE";
 				//flush();
 				$donations = self::$bulk['quasi_cache']['donation'];
