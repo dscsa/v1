@@ -576,10 +576,11 @@ class inventory extends MY_Model
 		
 		if(count($items) == 0){
 			$temp_items = $this->db->query("SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
-					FROM (item)
+					FROM item
+					USE INDEX (name_fulltext)
 					WHERE `item`.`archived` = 0
 					AND `name` LIKE '".str_replace(" ","%",$name).
-					"' ORDER BY item.updated
+					"' ORDER BY item.updated DESC
 					LIMIT 1");
 			$looked_up_by_name = true;
 			if(count($temp_items->result()) > 0){
