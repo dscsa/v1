@@ -270,6 +270,10 @@ class defaults
 			'Kentucky' =>
 			[
 				250 => 'Pharmacy'
+			],
+			'Massachussets' =>
+			[
+				260 => 'Pharmacy'
 			]
 		);
 
