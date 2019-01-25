@@ -281,6 +281,9 @@ class inventory extends MY_Model
 
  			if ($value == 'Pharmacy Name') //Pharmerica
  				self::$bulk['pharmacy_name'] = $index;
+			
+			if($value == 'pharmacy_name')
+				self::$bulk['polaris_pharmacy_name'] = $index;
 		}
 		
 		//print_r('bulk');
@@ -649,21 +652,26 @@ class inventory extends MY_Model
 					if((array_key_exists('date_str', self::$bulk['quasi_cache'])) AND (self::$bulk['quasi_cache']['date_str'] == $date_str)){
 						$donations = self::$bulk['quasi_cache']['donation'];
 					} else {
-						//take date and look for it in the date_shipped window AND it has donor id for one Polaris
-						$polaris_ids = [1313,1338]; //tweek this in the future so that we can have this info in the row from GW's process
+						//Look up by date shipped. The date_str is the exact date associated with the batch row, we search +/- one day
+						//Also restrain the search by using the polaris_pharmacy_name for that row, getting the id, and using that
+						
+						$pharm_name = $data[self::$bulk['polaris_pharmacy_name']];
+						$pharm_id = org::search(['org.name' => $pharm_name])->id;
 						$temp_donations = [];
-						foreach($polaris_ids as $polaris_id){
-							$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
+
+						//Take the date_str of the format YYYY-MM-DD and get the day before and day after to expand the search a little bit
+						$exact_date_obj = DateTime::createFromFormat('Y-m-d',$date_str);
+						$day_before = $exact_date_obj->sub(new DateInterval('P1D'))->format('Y-m-d');
+						$day_after = $exact_date_obj->add(new DateInterval('P2D'))->format('Y-m-d'); // add two days here because you actually modified original object when subtracting 
+						$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
                                  			       FROM (donation)
-                                        			WHERE `donation`.`donor_id` = ".$polaris_id.
-                                       				" AND `donation`.`date_shipped` BETWEEN '".$date_str." 00:00:00' AND '".$date_str." 23:59:59'");
-                        				if(count($temp_donations->result()) > 0){
-								$donations[] = $temp_donations->result()[0];
-								break;
-                        				}
-						}
+                                        			WHERE `donation`.`donor_id` = ".$pharm_id.
+                                       				" AND `donation`.`date_shipped` BETWEEN '".$day_before." 00:00:00' AND '".$day_after." 23:59:59'");
+                        			if(count($temp_donations->result()) > 0){
+							$donations[] = $temp_donations->result()[0];
+                        			}
 						if(count($donations) == 0){
-							return self::$bulk['alerts'][] = array_merge($data, ["NO POLARIS DONATIONS SHIPPED ON THIS DATE"]);
+							return self::$bulk['alerts'][] = array_merge($data, ["NO MATCHING NAME/DATE POLARIS DONATIONS"]);
 						} else {
 							self::$bulk['quasi_cache']['donation'] = $donations;
 						}
