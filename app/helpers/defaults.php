@@ -199,7 +199,8 @@ class defaults
 			[
 				90 => 'Long-Term Care Nursing Facility',
 				91 => "Assisted Living Residence",
-				92 => 'Pharmacy'
+				92 => 'Pharmacy',
+				93 => 'Wholesaler'
 			],
 			'Georgia' =>
 			[
