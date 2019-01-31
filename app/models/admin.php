@@ -129,11 +129,11 @@ class admin extends MY_Model
 
 				$donor_obj = org::search(['org.name' => $donor_name]);
 				if(count($donor_obj) == 0){
-					return self::$bulk['alerts'][] = array_merge($data, ["Donor name doesn't match V1"]);	
+					return self::$bulk['alerts'][] = array_merge($data, ["Donor name doesn't match V1"]);
 				}
 				$donee_obj = org::search(['org.name' => $donee_name]);
 				if(count($donee_obj) == 0){
-					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);	
+					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);
 				}
 
 				$donor_id = $donor_obj[0]->id;
@@ -148,7 +148,7 @@ class admin extends MY_Model
 						'num_labels' => $num_labels,
 					];
 				} else {
-					return self::$bulk['alerts'][] = array_merge($data, ["Recipient has not approved this donor."]);	
+					return self::$bulk['alerts'][] = array_merge($data, ["Recipient has not approved this donor."]);
 				}
 			}
 	}
