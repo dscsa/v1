@@ -172,10 +172,6 @@ class admin extends MY_Model
 
 		$date  = date(DB_DATE_FORMAT);
 
-		$path  = dirname(__FILE__).'/../'.file::path('upload', "metrics.csv");
-
-		@unlink($path);
-
 		if ($items)
 		{
 			$select .= '
@@ -204,7 +200,6 @@ class admin extends MY_Model
 			$from .= 'LEFT JOIN item ON item.id = donation_items.item_id';
 
 			$group = ''; //'donation_items.id';
-			$name  = "All Items $items";
 			$year  = "AND YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) = '$items'";
 		}
 		else
@@ -230,11 +225,15 @@ class admin extends MY_Model
 			donee_org.city as donee_city,
 			donee_org.zipcode as donee_zip';
 			$group = "GROUP BY donation.id";
-			$name  = 'Donations';
 			$year  = '';
 		}
 
 		$fields = implode("','", $this->db->query("SELECT $select $from LIMIT 1")->list_fields());
+
+    $file = $items ?: "donations";
+    $path = dirname(__FILE__).'/../'.file::path('upload', "$file.csv");
+
+    @unlink($path);
 
 		$this->db->query
 		(
