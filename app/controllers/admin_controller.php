@@ -339,7 +339,7 @@ function index()
 		set_time_limit(0);
 		$this->output->enable_profiler(FALSE);
 
-		$file = $items ?: "donations";
+		$file = $items ?: "Donations";
 		$path = dirname(__FILE__).'/../'.file::path('upload', "$file.csv");
 
 		//ignore_user_abort(false);

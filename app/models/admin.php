@@ -231,7 +231,7 @@ class admin extends MY_Model
 
 		$fields = implode("','", $this->db->query("SELECT $select $from LIMIT 1")->list_fields());
 
-    $file = $items ?: "donations";
+    $file = $items ?: "Donations";
     $path = dirname(__FILE__).'/../'.file::path('upload', "$file.csv");
 
     @unlink($path);
