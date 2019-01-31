@@ -197,7 +197,8 @@ class admin extends MY_Model
 			item.upc,
 			item.price as current_price';
 
-			$from .= 'LEFT JOIN item ON item.id = donation_items.item_id';
+			$from .= "
+      LEFT JOIN item ON item.id = donation_items.item_id";
 
 			$group = ''; //'donation_items.id';
 			$year  = "AND YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) = '$items'";
