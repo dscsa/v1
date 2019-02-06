@@ -551,7 +551,7 @@ class inventory extends MY_Model
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
 		}
 
-		if ($qty AND ! preg_match('/^[0-9.]+$/', $qty))
+		if ($qty AND ! preg_match('/^[0-9.-]+$/', $qty))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Quantity $qty must be a number"]);
 		}
