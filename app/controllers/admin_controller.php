@@ -37,7 +37,7 @@ function index()
 				array_push($file_path_2d_arr, $res);
 			}
 
-			
+
 			$final_file = pdf::merge($file_path_2d_arr);
 			file::download('label',$final_file);
 		}
@@ -76,8 +76,8 @@ function index()
 	function _index($donor_id, $donee_id, $num_labels, $label_type, $manual)
 	{
 		$result_arr = [];
-		
-		
+
+
 		for ($i = 0; $i < $num_labels; $i++){
 			//create labels, return array of the pdf locations
 			if ($label_type == 'label only')
@@ -137,8 +137,8 @@ function index()
 				//print_r($donation);
 			}
 
-			$file = donation::label($donation); //filepath to the label	
-			//TODO: Handle errors here if theres a FEDEX error, and don't add it to array as a filename.	
+			$file = donation::label($donation); //filepath to the label
+			//TODO: Handle errors here if theres a FEDEX error, and don't add it to array as a filename.
 			array_push($result_arr,$file);
 		}
 
@@ -149,7 +149,7 @@ function index()
 			//return array of filenames to be used in merging & then downloading
 			return $result_arr;
 		}
-		
+
 	}
 
 	function deprecated_index()
@@ -332,106 +332,15 @@ function index()
  SUM(donation_items.price * donation_items.donee_qty) as donee_value, donor_org.street as donor_street, donor_org.city as donor_city, donor_org.zipcode as donor_zip, donee_org.street as donee_street, donee_org.city as donee_city, donee_org.zipcode as donee_zip';
  */
 
-   function metrics($items = false)
+  function metrics($items = false)
 	{
 		user::login($org_id, 'admin');
 
 		set_time_limit(0);
 		$this->output->enable_profiler(FALSE);
-		$this->db->save_queries = false;
 
-		$select = 'donor_org.name as donor_org, donee_org.name as donee_org, donor_org.state as donor_state, donee_org.state as donee_state, donor_org.license as donor_license, donation.*,
-		COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created) as date_status,
-		YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) as year_status,
-		MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) as month_status,
-		CEIL(MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created))/3) as quarter_status,';
-
-		$from = "FROM donation
-		LEFT JOIN donation_items ON donation_items.donation_id = donation.id
-		LEFT JOIN item ON item.id = donation_items.item_id
-		LEFT JOIN org as donee_org ON donee_org.id = donation.donee_id
-		LEFT JOIN org as donor_org ON donor_org.id = donation.donor_id";
-
-		$date  = date(DB_DATE_FORMAT);
-
-		$path  = dirname(__FILE__).'/../'.file::path('upload', "metrics.csv");
-
-		@unlink($path);
-
-		if ($items)
-		{
-			$select .= '
-			donation_items.donor_qty as donor_qty,
-			donation_items.donee_qty as donee_qty,
-			donation_items.donee_qty * (donation_items.archived = 0) as accepted_qty,
-
-			IF(donation_items.donor_qty is not null, 1, 0) as donor_count,
-			IF(donation_items.donee_qty is not null, 1, 0) as donee_count,
-			IF(donation_items.archived = 0, 1, 0) as accepted_count,
-
-			donation_items.price * donation_items.donor_qty as donor_value,
-			donation_items.price * donation_items.donee_qty as donee_value,
-			donation_items.price * donation_items.donee_qty * (donation_items.archived = 0) as accepted_value,
-
-			donation_items.exp_date,
-			donation_items.price,
-			item.id as item_id,
-			item.name as item_name,
-			item.description as item_desc,
-			item.type,
-			item.mfg,
-			item.upc,
-			item.price as current_price';
-
-			$group = ''; //'donation_items.id';
-			$name  = "All Items $items";
-			$year  = "AND YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) = '$items'";
-		}
-		else
-		{
-			$select .= '
-			IFNULL(SUM(donation_items.donor_qty), "") as donor_qty,
-			IFNULL(SUM(donation_items.donee_qty), "") as donee_qty,
-			IFNULL(SUM(donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_qty,
-
-			SUM(IF(donation_items.donor_qty is not null, 1, 0)) as donor_count,
-			SUM(IF(donation_items.donee_qty is not null, 1, 0)) as donee_count,
-			SUM(IF(donation_items.archived = 0, 1, 0)) as accepted_count,
-
-			IFNULL(SUM(donation_items.price * donation_items.donor_qty), "") as donor_value,
-			IFNULL(SUM(donation_items.price * donation_items.donee_qty), "") as donee_value,
-			IFNULL(SUM(donation_items.price * donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_value,
-
-			donor_org.street as donor_street,
-			donor_org.city as donor_city,
-			donor_org.zipcode as donor_zip,
-			donee_org.street as donee_street,
-			donee_org.city as donee_city,
-			donee_org.zipcode as donee_zip';
-			$group = "GROUP BY donation.id";
-			$name  = 'Donations';
-			$year  = '';
-		}
-
-		$fields = implode("','", $this->db->query("SELECT $select $from LIMIT 1")->list_fields());
-
-		$this->db->query
-		(
-			//UNION ALL is stackoverflow suggestion for including column names within an outfile
-			//GROUP BY $group ORDER BY donation.id DESC
-			"SELECT '$fields' UNION ALL
-			(
-				SELECT $select
-				INTO OUTFILE '$path' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n'
-				$from
-				WHERE donation.archived = 0
-				AND (donation_items.id > 0 OR donation.date_received > 0 OR donation.date_shipped > 0)
-				$year
-				$group
-			)"
-		);
-
-
+		$file = $items ?: "Donations";
+		$path = dirname(__FILE__).'/../'.file::path('upload', "$file.csv");
 
 		//ignore_user_abort(false);
 		ini_set('output_buffering', 0);
@@ -442,13 +351,13 @@ function index()
 		$fh = fopen($path, "rb");
 
 		if ($fh === false) {
-		    echo "Unable open file";
-				echo mysql_error();
+		    echo "Unable open file.  Check that the cron job ran properly";
 		}
 
+		//Attempt to prevent browser (and Cloudflare's 100 sec) timeouts
 		header('Content-Description: File Transfer');
 		header('Content-Type: application/octet-stream');
-		header('Content-Disposition: attachment; filename="' . "SIRUM $name $date.csv" . '"');
+		header('Content-Disposition: attachment; filename="' . "SIRUM $file $date.csv" . '"');
 		header('Expires: 0');
 		header('Cache-Control: must-revalidate');
 		header('Pragma: public');
@@ -460,16 +369,6 @@ function index()
 		    ob_flush();  // flush output
 		    flush();
 		}
-
-		/* This was too slow 5+ mins and often failed with memory exhausted errors
-		$csv = @file_get_contents($path);
-
-		if ( ! $csv) echo mysql_error();
-
-		$this->load->helper('download');
-
-		force_download("SIRUM $name $date.csv", $csv);
-		*/
 	}
 
 /**

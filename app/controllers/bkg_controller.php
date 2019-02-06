@@ -61,6 +61,10 @@ class Bkg_controller extends MY_Controller
 			bkg::ec2('CreateSnapshot', ["VolumeId" => secure::key('aws_volume'), "Description" => 'CRON'.date('Y-m-d')]);
 
 			bkg::admin('digest');
+
+			bkg::admin('metrics'); //docations.csv
+
+			bkg::admin('metrics', date("Y")); //all items csv of current year (assume nothing has changed for previous years)
 		}
 
 		//Run on Monday at 9am GMT

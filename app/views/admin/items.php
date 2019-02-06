@@ -23,6 +23,14 @@
 
 			->li(html::link('admin/metrics/2017', 'All Items 2017.csv'))
 
+			->li(html::link('admin/metrics/2018', 'All Items 2018.csv'))
+
+			->li(html::link('admin/metrics/2019', 'All Items 2019.csv'))
+
+			->li(html::link('admin/metrics/2020', 'All Items 2020.csv'))
+
+			->li(html::link('admin/metrics/2021', 'All Items 2021.csv'))
+
 		->end()
 
 		->h3("Update Database")
