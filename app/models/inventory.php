@@ -281,8 +281,10 @@ class inventory extends MY_Model
 
  			if ($value == 'Pharmacy Name') //Pharmerica
  				self::$bulk['pharmacy_name'] = $index;
+			
+			if($value == 'pharmacy_name')
+				self::$bulk['polaris_pharmacy_name'] = $index;	
 		}
-		
 		//print_r('bulk');
 		//print_r(self::$bulk);
 		/*if (empty($data[self::$bulk['donation_id']])) {
@@ -551,7 +553,7 @@ class inventory extends MY_Model
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
 		}
 
-		if ($qty AND ! preg_match('/^[0-9.]+$/', $qty))
+		if ($qty AND ! preg_match('/^[0-9.-]+$/', $qty))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Quantity $qty must be a number"]);
 		}
@@ -650,23 +652,32 @@ class inventory extends MY_Model
 						$donations = self::$bulk['quasi_cache']['donation'];
 					} else {
 						//take date and look for it in the date_shipped window AND it has donor id for one Polaris
-						$polaris_ids = [1313,1338]; //tweek this in the future so that we can have this info in the row from GW's process
 						$temp_donations = [];
-						foreach($polaris_ids as $polaris_id){
-							$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
-                                 			       FROM (donation)
-                                        			WHERE `donation`.`donor_id` = ".$polaris_id.
-                                       				" AND `donation`.`date_shipped` BETWEEN '".$date_str." 00:00:00' AND '".$date_str." 23:59:59'");
-                        				if(count($temp_donations->result()) > 0){
-								$donations[] = $temp_donations->result()[0];
-								break;
-                        				}
-						}
-						if(count($donations) == 0){
-							return self::$bulk['alerts'][] = array_merge($data, ["NO POLARIS DONATIONS SHIPPED ON THIS DATE"]);
+						$exact_date_obj = DateTime::createFromFormat('Y-m-d',$date_str);
+						if($exact_date_obj){ //makes sure the date is formatted correctly
+        	                                        $pharm_name = $data[self::$bulk['polaris_pharmacy_name']];
+	                                                $pharm_id = org::search(['org.name' => $pharm_name])->id;
+							
+							$day_before = $exact_date_obj->sub(new DateInterval('P1D'))->format('Y-m-d');
+                                                	$day_after = $exact_date_obj->add(new DateInterval('P2D'))->format('Y-m-d'); // add two days here because you actually modified original object when subtracting 
+                                                	$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
+                                                               FROM (donation)
+                                                                WHERE `donation`.`donor_id` = ".$pharm_id.
+                                                                " AND `donation`.`date_shipped` BETWEEN '".$day_before." 00:00:00' AND '".$day_after." 23:59:59'");
+                                                	if(count($temp_donations->result()) > 0){
+                                                                $donations[] = $temp_donations->result()[0];
+                                               		}
+                                                	if(count($donations) == 0){
+                                                        	return self::$bulk['alerts'][] = array_merge($data, ["NO POLARIS DONATIONS SHIPPED ON THIS DATE"]);
+                                                	} else {
+                                                        	self::$bulk['quasi_cache']['donation'] = $donations;
+                                                	}
+
 						} else {
-							self::$bulk['quasi_cache']['donation'] = $donations;
+                                                        return self::$bulk['alerts'][] = array_merge($data, ["DATE OBJECT NOT FORMATTED CORRECTLY YYYY-MM-DD"]);
+
 						}
+
 					}
 				} else { //then its V2,Coleman, or Polaris without a tracking number in that row and it uses just tracking number
 					$donations = donation::search(['tracking_number' => $tracking_num]);	
