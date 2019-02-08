@@ -283,7 +283,12 @@ class inventory extends MY_Model
  				self::$bulk['pharmacy_name'] = $index;
 			
 			if($value == 'pharmacy_name')
-				self::$bulk['polaris_pharmacy_name'] = $index;	
+				self::$bulk['polaris_pharmacy_name'] = $index;
+
+                        if($value == 'trusted_source')
+                                self::$bulk['trusted_source'] = $index;
+
+	
 		}
 		//print_r('bulk');
 		//print_r(self::$bulk);
@@ -335,6 +340,10 @@ class inventory extends MY_Model
 		return array_key_exists('donation_id', self::$bulk);
 	}
 
+	function isTrusted(){
+                return array_key_exists('trusted_source', self::$bulk);
+	}
+
 	function isPolaris(){
 		return array_key_exists('date_str', self::$bulk);
 	}
@@ -344,6 +353,49 @@ class inventory extends MY_Model
 	function import($data, $row)
 	{
 		//set_time_limit(5);
+
+		if((self::isTrusted()) AND ($row > 1)){
+        	        echo "TRUESTED";
+			flush();
+			//barebones code to handle periodically adding new ndcs or updating prices
+			//the 'trusted_source' tag only gets used by OS or AK, with well-formatted data
+			$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
+                      	$name = $data[self::$bulk['name']];
+			$price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
+                        $goodrx = array_key_exists('goodrx', self::$bulk) ? $data[self::$bulk['goodrx']] : "";
+                        $nadac = array_key_exists('nadac', self::$bulk) ? $data[self::$bulk['nadac']] : "";
+                        $price = $goodrx ?: $nadac;
+                        $price_type = $goodrx ? 'goodrx' : 'nadac';
+                        $description= array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
+ 
+			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
+                        $items = item::search(['upc' => $ndc]);
+                	if(count($items) > 0){
+				//then this NDC was found, and I want to update price
+				$this->db->where('id', $items[0]->id);
+				$this->db->set('price',$price);
+				$this->db->set('price_type',$price_type);
+				$this->db->set('price_date',$price_date);
+				$this->db->update('item');	
+			} else {
+                		//then we want to add this ndc, with all relavant info
+				$drug = (object) [ //these qualities, plus upc (see past next if/else) will always be added
+                                'updated'     => gmdate(DB_DATE_FORMAT),
+                                'type'                    => 'medicine',
+                                'name'                    => $name,
+                                'description'   => ($description ?: $name)." (Rx ".($description ? 'Brand' : 'Generic').")",
+                        	];
+	
+				$drug->price = $price ? $price : 0;
+	                        $drug->price_date = $price_date ? $price_date : '0000-00-00 00:00:00';
+        	                $drug->price_type = $price_type? $price_type : '';
+                	        $drug->upc = $ndc;
+
+                        	$this->db->insert('item', $drug);
+
+			}
+			return;
+		}
 
 		if($row > 2500){
                        return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
