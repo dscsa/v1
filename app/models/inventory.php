@@ -205,6 +205,9 @@ class inventory extends MY_Model
 	}
 
 	function setFields($data) {
+
+		log::info('inventory::setFields');
+
 		foreach ($data as $index => $value) {
 
 			if ($value == 'drug._id') //V2
@@ -221,10 +224,10 @@ class inventory extends MY_Model
 
 			if ($value == 'Qty') //Coleman
 				self::$bulk['qty'] = $index;
-			
+
 			//if(strpos(strtolower($value),'qty') !== false)
 			//	self::$bulk['qty'] = $index;
-		
+
 			if ($value == 'Return Quantity') //Pharmerica
 				self::$bulk['qty'] = $index;
 
@@ -275,20 +278,20 @@ class inventory extends MY_Model
 
  			 if ($value == 'tracking num')
  				self::$bulk['tracking_num'] = $index;
-			
+
 			if($value == 'date_str')
 				self::$bulk['date_str'] = $index;
 
  			if ($value == 'Pharmacy Name') //Pharmerica
  				self::$bulk['pharmacy_name'] = $index;
-			
+
 			if($value == 'pharmacy_name')
 				self::$bulk['polaris_pharmacy_name'] = $index;
 
-                        if($value == 'trusted_source')
-                                self::$bulk['trusted_source'] = $index;
+      if($value == 'trusted_source')
+        self::$bulk['trusted_source'] = $index;
 
-	
+
 		}
 		//print_r('bulk');
 		//print_r(self::$bulk);
@@ -327,7 +330,7 @@ class inventory extends MY_Model
 			return 'November';
 		} else if($raw == '12'){
 			return 'December';
-		} 
+		}
 	}
 
 
@@ -354,8 +357,11 @@ class inventory extends MY_Model
 	{
 		//set_time_limit(5);
 
+		log::info('inventory::import');
+
 		if((self::isTrusted()) AND ($row > 1)){
-        	        echo "TRUESTED";
+			log::info('inventory::import isTrusted');
+      echo "TRUSTED";
 			flush();
 			//barebones code to handle periodically adding new ndcs or updating prices
 			//the 'trusted_source' tag only gets used by OS or AK, with well-formatted data
@@ -367,7 +373,7 @@ class inventory extends MY_Model
                         $price = $goodrx ?: $nadac;
                         $price_type = $goodrx ? 'goodrx' : 'nadac';
                         $description= array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
- 
+
 			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
                         $items = item::search(['upc' => $ndc]);
                 	if(count($items) > 0){
@@ -376,7 +382,7 @@ class inventory extends MY_Model
 				$this->db->set('price',$price);
 				$this->db->set('price_type',$price_type);
 				$this->db->set('price_date',$price_date);
-				$this->db->update('item');	
+				$this->db->update('item');
 			} else {
                 		//then we want to add this ndc, with all relavant info
 				$drug = (object) [ //these qualities, plus upc (see past next if/else) will always be added
@@ -385,7 +391,7 @@ class inventory extends MY_Model
                                 'name'                    => $name,
                                 'description'   => ($description ?: $name)." (Rx ".($description ? 'Brand' : 'Generic').")",
                         	];
-	
+
 				$drug->price = $price ? $price : 0;
 	                        $drug->price_date = $price_date ? $price_date : '0000-00-00 00:00:00';
         	                $drug->price_type = $price_type? $price_type : '';
@@ -403,7 +409,8 @@ class inventory extends MY_Model
 
 		if($row % 10 == 0){
 			//header("Refresh:0");
-			//header("HTTP/1.0 102 Processing");	
+			//header("HTTP/1.0 102 Processing");
+			log::info('inventory::import row updates');
 			echo "Processing row: ".$row."<br>";
 			flush();
 			print_r("...<br>");
@@ -423,7 +430,7 @@ class inventory extends MY_Model
 			$filename = data::post('orig_filename');
 			self::$bulk['quasi_cache']['orig_filename'] = $filename;
 		}
-		//$filename = data::post('orig_filename'); //gets the filename 
+		//$filename = data::post('orig_filename'); //gets the filename
 
     		//if ( ! $row % 100)
 		//Unlike bulk() don't assume a certain field order.  Look for the correct names.
@@ -453,7 +460,7 @@ class inventory extends MY_Model
 	  			self::setFields($data);
 	  			return self::$bulk['alerts'][] = array_merge($data, ['error']);
 	  		}
-	  		
+
 	  		return self::$bulk['alerts'][] = $data; //copy in the first 5 rows so you can reupload with same code
 	  	}
 
@@ -470,7 +477,7 @@ class inventory extends MY_Model
 	  	$price = '';
 	  	$price_type = '';
 
-	  	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris). 
+	  	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris).
 	  	//it will not be used for Pharmerica
 	  	$tracking_num = '';
 
@@ -497,10 +504,10 @@ class inventory extends MY_Model
 			//Format Phone numbers appropriately
 			$donor_phone = '('.substr($donor_phone, 0, 3).') '.substr($donor_phone, 3, 3).'-'.substr($donor_phone, 6, 4);
 			$donee_phone = '('.substr($donee_phone, 0, 3).') '.substr($donee_phone, 3, 3).'-'.substr($donee_phone, 6, 4);
-			
-			//extract data in variables	
+
+			//extract data in variables
 			$exp = $data[self::$bulk['exp']];
-			
+
 			$archived = array_key_exists('verified', self::$bulk) ?  $data[self::$bulk['verified']] : "";
 			$description = array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
 			$price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
@@ -514,7 +521,7 @@ class inventory extends MY_Model
 		if(array_key_exists('ndc', self::$bulk)){
 			$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
 		}
-		
+
 		$qty = $data[self::$bulk['qty']];
 		if(!$qty){
 			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
@@ -534,7 +541,7 @@ class inventory extends MY_Model
 		//if there was no tracking number in the columns and if they're not pharmerica
 		//then we need a tracking number in file name, else the whole thign won't work
 		if((!array_key_exists('tracking_num', self::$bulk)) AND !self::isPharmerica()){
-			preg_match('/([0-9]{15})/',$filename,$m); 
+			preg_match('/([0-9]{15})/',$filename,$m);
 			if(count($m) == 0){
 				preg_match('/([0-9]{6})/',$filename,$m); //if coleman this will match
 				if(count($m) == 0){
@@ -566,7 +573,7 @@ class inventory extends MY_Model
 			} else {
 				$full_name = "Pharmerica ".$data[self::$bulk['pharmacy_name']]; //then they refer to themselves the same way
 			}
-			
+
 
 			//get the donor & donee id's, either from DB or from cache
 	                $donor_obj = [];
@@ -599,13 +606,15 @@ class inventory extends MY_Model
 		}
 
 
-		//Use regular expressions for validation. 
+		//Use regular expressions for validation.
+		log::info('inventory::import preg_match ndc');
 		if (strlen($ndc) > 0 AND ! preg_match('/^[0-9-]+$/', $ndc))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
 		}
 
-		if ($qty AND ! preg_match('/^[0-9.-]+$/', $qty))
+		log::info('inventory::import pre_match qty');
+		if ($qty AND ! preg_match('/^-?[0-9.]+$/', $qty))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Quantity $qty must be a number"]);
 		}
@@ -627,7 +636,7 @@ class inventory extends MY_Model
 			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
 			$items = item::search(['upc' => $ndc]);
 		}
-		
+
 		if(count($items) == 0){
 			$query = "SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
                                         FROM item
@@ -664,7 +673,7 @@ class inventory extends MY_Model
 			if(self::isV2()){ //V2 is only one where ndc is dash-separated
 				list($label, $prod) = explode('-', $ndc); //may need to pad the NDC with leading 0s into the 5-4 format so split it apart.
 				$upc = str_pad($label, 5, '0', STR_PAD_LEFT).str_pad($prod, 4, '0', STR_PAD_LEFT);
-				
+
 			} else {
 				$upc =  substr($ndc, 0, 9); //TODO: Confirm that getting rid of package code like this is all we need to do
 			}
@@ -698,20 +707,21 @@ class inventory extends MY_Model
 				$donations = self::$bulk['quasi_cache']['donation'];
 			} else {
 				//look up by tracking number or date_str if it's Polaris and there's no tracking number
-				if(self::isPolaris() AND !$tracking_num){		
+				if(self::isPolaris() AND !$tracking_num){
                                         $date_str =  $data[self::$bulk['date_str']];
 					if((array_key_exists('date_str', self::$bulk['quasi_cache'])) AND (self::$bulk['quasi_cache']['date_str'] == $date_str)){
 						$donations = self::$bulk['quasi_cache']['donation'];
 					} else {
 						//take date and look for it in the date_shipped window AND it has donor id for one Polaris
 						$temp_donations = [];
+						log::info('inventory::import DateTime::createFromFormat');
 						$exact_date_obj = DateTime::createFromFormat('Y-m-d',$date_str);
 						if($exact_date_obj){ //makes sure the date is formatted correctly
         	                                        $pharm_name = $data[self::$bulk['polaris_pharmacy_name']];
 	                                                $pharm_id = org::search(['org.name' => $pharm_name])->id;
-							
-							$day_before = $exact_date_obj->sub(new DateInterval('P1D'))->format('Y-m-d');
-                                                	$day_after = $exact_date_obj->add(new DateInterval('P2D'))->format('Y-m-d'); // add two days here because you actually modified original object when subtracting 
+																									log::info('inventory::import DateInterval');
+																									$day_before = $exact_date_obj->sub(new DateInterval('P1D'))->format('Y-m-d');
+                                                	$day_after = $exact_date_obj->add(new DateInterval('P2D'))->format('Y-m-d'); // add two days here because you actually modified original object when subtracting
                                                 	$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
                                                                FROM (donation)
                                                                 WHERE `donation`.`donor_id` = ".$pharm_id.
@@ -732,14 +742,14 @@ class inventory extends MY_Model
 
 					}
 				} else { //then its V2,Coleman, or Polaris without a tracking number in that row and it uses just tracking number
-					$donations = donation::search(['tracking_number' => $tracking_num]);	
+					$donations = donation::search(['tracking_number' => $tracking_num]);
                               		self::$bulk['quasi_cache']['donation'] = $donations;
 				}
 			}
 		} else { //If pharmerica, lookup by dummy tracking number name
 			//look up with pharmacy donor id and the placeholder name format ('Viewmaster_January_2018')
                         //if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['full_name'] == $full_name) AND (self::$bulk['quasi_cache']['donation']->tracking_number == 'Viewmaster_'.self::$bulk['pharmericaMonth'])){
-                        if((!$is_new_facility) AND (array_key_exists('donation', self::$bulk['quasi_cache']))){ 
+                        if((!$is_new_facility) AND (array_key_exists('donation', self::$bulk['quasi_cache']))){
 			       //echo "HERE";
 				//flush();
 				$donations = self::$bulk['quasi_cache']['donation'];
@@ -747,7 +757,7 @@ class inventory extends MY_Model
 
 
 			} else {
-					
+
                         	$donations = donation::search(['donor_id' => $donor_id, 'tracking_number' => 'Viewmaster_'.self::$bulk['pharmericaMonth']]);
 				self::$bulk['quasi_cache']['donation'] = $donations;
 			}
@@ -810,7 +820,7 @@ class inventory extends MY_Model
 		} else {
 			$archived_date = date::format($archived, DB_DATE_FORMAT);
 		}
-	
+
 		//Ok Item should have exactly one drug and one donation/shipment at this point so we should be able to add
 		self::create([
 			'donation_id'	=> $donations[0]->donation_id,
@@ -847,4 +857,3 @@ class inventory extends MY_Model
 			self::increment(['org_id' => $donations[0]->donee_id, 'item_id' => $items[0]->id], $qty);
 	}
 }  // END OF CLASS
-

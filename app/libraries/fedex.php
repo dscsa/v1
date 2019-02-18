@@ -11,7 +11,7 @@ class fedex extends MY_Library
 		if (is_soap_fault($response))
 		{
 			//Throw error if faulty internet connection
-			return self::_return('error', log::error("Fedex Library had a problem: $response->faultstring".print_r($response, true)));
+			return self::_return('error', log::error("Fedex Library had a problem: $response->faultstring"));
 		}
 
 		if ($func == 'getPickupAvailability') {
