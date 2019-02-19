@@ -125,7 +125,7 @@ class admin extends MY_Model
 	{
 			if($row > 1){
 
-				list($donor_name, $donee_name, $num_labels) = $data; //get variables, force user to use three columns in order
+				list($donor_name, $donee_name, $num_labels,$attn) = $data; //get variables, force user to use three columns in order
 
 				$donor_obj = org::search(['org.name' => $donor_name]);
 				if(count($donor_obj) == 0){
@@ -134,6 +134,10 @@ class admin extends MY_Model
 				$donee_obj = org::search(['org.name' => $donee_name]);
 				if(count($donee_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);
+				}
+				//require an attn field for bulk 
+				if(strlen($attn) == 0){
+					return self::$bulk['alerts'][] = array_merge($data,["No ATTN field provided for mailing"]);
 				}
 
 				$donor_id = $donor_obj[0]->id;
@@ -146,6 +150,7 @@ class admin extends MY_Model
 						'donor_id' => $donor_id,
 						'donee_id' => $donee_id,
 						'num_labels' => $num_labels,
+						'attn_field' => $attn
 					];
 				} else {
 					return self::$bulk['alerts'][] = array_merge($data, ["Recipient has not approved this donor."]);

@@ -33,7 +33,8 @@ function index()
 				$donor_id = $data['donor_id'];
 				$donee_id = $data['donee_id'];
 				$num_labels = $data['num_labels'];
-				$res = self::_index($donor_id, $donee_id, $num_labels, "donation",false);
+				$attn = $data['attn_field'];
+				$res = self::_index($donor_id, $donee_id, $num_labels, $attn,"donation",false);
 				array_push($file_path_2d_arr, $res);
 			}
 
@@ -50,7 +51,7 @@ function index()
                 $donee_id = data::post('donee_id');
 		$num_labels = 1;
                 $label_type = data::post('label_type');
-		self::_index($donor_id, $donee_id, $num_labels, $label_type, true);
+		self::_index($donor_id, $donee_id, $num_labels, "", $label_type, true);
 	}
 
 	$per_page = result::$per_page;
@@ -73,7 +74,7 @@ function index()
 
 	//Actually generates the labels, barely modified version of the old _index function so
 	//that it can take in values useful for mass label creation.
-	function _index($donor_id, $donee_id, $num_labels, $label_type, $manual)
+	function _index($donor_id, $donee_id, $num_labels, $attn, $label_type, $manual)
 	{
 		$result_arr = [];
 
@@ -136,7 +137,9 @@ function index()
 				//echo $this->db->last_query();
 				//print_r($donation);
 			}
-
+			if(strlen($attn) > 0){ //this catches the bulk label creation, in which case we've been provided with an attn_field
+				$donation->donor_user = $attn; //we take as 'truth' whats provided in the csv from Bertha & the actual logger
+			}
 			$file = donation::label($donation); //filepath to the label
 			//TODO: Handle errors here if theres a FEDEX error, and don't add it to array as a filename.
 			array_push($result_arr,$file);

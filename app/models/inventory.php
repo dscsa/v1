@@ -288,8 +288,8 @@ class inventory extends MY_Model
 			if($value == 'pharmacy_name')
 				self::$bulk['polaris_pharmacy_name'] = $index;
 
-      if($value == 'trusted_source')
-        self::$bulk['trusted_source'] = $index;
+      			if($value == 'trusted_source')
+        			self::$bulk['trusted_source'] = $index;
 
 
 		}
@@ -361,7 +361,7 @@ class inventory extends MY_Model
 
 		if((self::isTrusted()) AND ($row > 1)){
 			log::info('inventory::import isTrusted');
-      echo "TRUSTED";
+      			echo "TRUSTED";
 			flush();
 			//barebones code to handle periodically adding new ndcs or updating prices
 			//the 'trusted_source' tag only gets used by OS or AK, with well-formatted data
@@ -376,14 +376,14 @@ class inventory extends MY_Model
 
 			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
                         $items = item::search(['upc' => $ndc]);
-                	if(count($items) > 0){
+                	if(count($items) == 1){//require exact match
 				//then this NDC was found, and I want to update price
 				$this->db->where('id', $items[0]->id);
-				$this->db->set('price',$price);
-				$this->db->set('price_type',$price_type);
-				$this->db->set('price_date',$price_date);
+				if($price) $this->db->set('price',$price);
+				if($price_type) $this->db->set('price_type',$price_type);
+				if($price_date) $this->db->set('price_date',$price_date);
 				$this->db->update('item');
-			} else {
+			} else if(count($items) == 0){
                 		//then we want to add this ndc, with all relavant info
 				$drug = (object) [ //these qualities, plus upc (see past next if/else) will always be added
                                 'updated'     => gmdate(DB_DATE_FORMAT),
