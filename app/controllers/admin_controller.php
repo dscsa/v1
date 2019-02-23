@@ -22,7 +22,7 @@ function index()
 			echo "ERRORS IN CSV:<br>";
 			for($i = 0; $i < count(admin::$bulk['alerts']); $i++){
 				$row = admin::$bulk['alerts'][$i];
-				echo "DONOR: ".$row[0]."; DONEE: ".$row[1].";ATTN: ".$row[3]."; ERROR:".$row[4]."<br>";
+				echo "DONOR: ".$row[0]."; DONEE: ".$row[1]."; ERROR: ".$row[3]."<br>";
 			}
 			echo "Fix/remove the corresponding rows, then retry. To reload the page, hit enter in url bar, instead of refreshing.<br>";
 		} else { //only generate labels if there are no errors
