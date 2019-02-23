@@ -329,7 +329,7 @@ class donation extends MY_Model
 		//This was causing a exhaustion error
 		//$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
 
-		$query = "SELECT donation.*, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '2016-01-01 00:00:00' AND tracking_number IS NOT NULL";
+		$query = "SELECT donation.*, id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '2016-01-01 00:00:00' AND tracking_number IS NOT NULL";
 
 		log::info("Tracking donations 5");
 
@@ -369,7 +369,9 @@ class donation extends MY_Model
 			{
 				$email[] = $donation->donee_org;
 
-				if ($donation->count)
+				$query = "SELECT COUNT(*) as count FROM donation_items WHERE donation_id = $donation->donation_id";
+				$donation_items = $this->db->query($query)->result();
+				if ($donation_items[0]->count)
 				{
 					org::email($donation->donor_id, 'email_received_items', $email, file::path('manifest', donation::reference($donation).'_manifest.pdf'));
 				}
