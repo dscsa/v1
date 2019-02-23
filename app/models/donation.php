@@ -306,20 +306,41 @@ class donation extends MY_Model
 */
 	function track()
 	{
+
+		log::info("Tracking donations 1");
 		//Hack to temporarily suspend per page limit
 		$per_page = result::$per_page;
 
+		log::info("Tracking donations 2");
+
 		result::$per_page = 9999;
-		
+
+		log::info("Tracking donations 3");
+
 		//start of OS modifications
 		//check that 'created' is in the past 5 years
 		//check that the tracking number is a 15 digit SIRUM standard (not Viewmaster or empty)
 		//check that date verified is NULL
 		//check that date received is NULL
 		$created_cutoff = date('Y-m-d H:i:s',strtotime('-3 year'));
-		$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
-		//print_r(count($donations));
-		//return;
+
+		log::info("Tracking donations 4");
+
+		//This was causing a exhaustion error
+		//$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
+
+		$query = "SELECT donation.*, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '2016-01-01 00:00:00' AND tracking_number IS NOT NULL";
+
+		log::info("Tracking donations 5");
+
+		$donations = $this->db->query($query);
+
+		log::info("Tracking donations 6");
+
+		//Make each row a donation record with result(model_name)
+		$donations = $donations->result('record');
+
+		log::info("Tracking donations 7");
 
 		//end of OS modifications
 		result::$per_page = $per_page;
