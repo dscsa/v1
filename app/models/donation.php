@@ -329,8 +329,9 @@ class donation extends MY_Model
 		//This was causing a exhaustion error
 		//$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
 
-		$query = "SELECT donation.*, id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '2016-01-01 00:00:00' AND tracking_number IS NOT NULL";
-
+		$query = "SELECT donation.*, donation.id as id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '".$created_cutoff."' AND tracking_number REGEXP '[0-9]{15}'";
+		//echo $query;
+		//flush();
 		log::info("Tracking donations 5");
 
 		$donations = $this->db->query($query);
@@ -341,6 +342,8 @@ class donation extends MY_Model
 		$donations = $donations->result('record');
 
 		log::info("Tracking donations 7");
+		//print_r(count($donations));
+		//return;
 
 		//end of OS modifications
 		result::$per_page = $per_page;
@@ -348,7 +351,7 @@ class donation extends MY_Model
 
 		log::info("Tracking ".count($donations)." donations");
 
-		/*if (count($donations) == 9999)
+		/*Fires:*if (count($donations) == 9999)
 			admin::email('Tracking Max Number of Donations', 'More than 9999 unreceived donations.  Only searching for the first 9999. '.$this->db->last_query());
 		*/
 		foreach($donations as $donation)

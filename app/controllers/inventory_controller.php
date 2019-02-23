@@ -90,7 +90,7 @@ class Inventory_controller extends MY_Controller
 				//this will goto zero, however then if the next NDC says increase by 1 then it will goto
 				//1 and show rather than being at -1 which would still be hidden
 				//inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
-
+				
 				$success .= "<br>Row $data[row]: $data[ndc] quantity $data[verb] by $data[dispensed]";
 			}
 			$total_rows = $num_errors + count(inventory::$bulk['upload']);

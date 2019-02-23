@@ -20,7 +20,7 @@ class Donations_controller extends MY_Controller
 	function index()
 	{
 		user::login($org_id);
-
+		
 		$query = result::fields
 		(
 			['Partner', 'partner', 'partner()'],
