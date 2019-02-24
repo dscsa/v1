@@ -342,7 +342,7 @@ class donation extends MY_Model
 		//This was causing a crash since all rows were prefetched: $donations = $donations->result('record');
 		$count = 0;
 
-		log::info("Tracking donations 5 |".print_r($donations, true)."|");
+		log::info("Tracking donations 5");
 
 		$donations->_data_seek(0);
 
@@ -350,16 +350,12 @@ class donation extends MY_Model
 
 	  while ($row = $donations->_fetch_object())
 	  {
-			log::info("Tracking donations 7 - $count");
-
 			$count++;
 			$donation = new record();
 			foreach ($row as $key => $value)
 			{
 					$donation->$key = $value;
 			}
-
-			log::info("Tracking donations 8 - $count");
 
 			$track = fedex::track($donation->tracking_number);
 			$email = [$donation->donor_org, $donation->donation_id, $donation->fedex()];
@@ -375,6 +371,8 @@ class donation extends MY_Model
 
 			if ('date_received' == $stage)
 			{
+				log::info("Tracking donations - $count date_recieved");
+
 				$email[] = $donation->donee_org;
 
 				$query = "SELECT COUNT(*) as count FROM donation_items WHERE donation_id = $donation->donation_id";
@@ -394,6 +392,9 @@ class donation extends MY_Model
 			//Check if already shipped because FedEx can send this stage multiple times - but only send emails the first time!
 			if ('date_shipped' == $stage AND ! (int) $donation->date_shipped)
 			{
+
+				log::info("Tracking donations - $count date_shipped");
+
 				//Exclude TLC from shipped emails.
 				$org_id = $donation->donee_id == 608 ? 32 : $donation->donee_id;
 
@@ -407,6 +408,8 @@ class donation extends MY_Model
 			//Oops looks like what we thought was shipped wasn't shipped after all.
 			if ('order_created' == $stage AND (int) $donation->date_pickup AND (strtotime($donation->date_pickup) + 4200 <= time()))
 			{
+				log::info("Tracking donations - $count order_created");
+
 				admin::email('email_missed_pickup', $email);
 
 				//TODO hardcoded 9am time, caused problems for Olive Vista 60487 ~11/28/2014
