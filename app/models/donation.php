@@ -347,7 +347,7 @@ class donation extends MY_Model
 		//This was causing a crash since all rows were prefetched: $donations = $donations->result('record');
 		$count = 0;
 		$donations->_data_seek(0);
-		og::info("Tracking donations 8");
+		log::info("Tracking donations 8");
 	  while ($row = $donations->_fetch_object())
 	  {
 			log::info("Tracking donations 9 - $count");
