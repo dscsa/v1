@@ -347,9 +347,10 @@ class donation extends MY_Model
 		//This was causing a crash since all rows were prefetched: $donations = $donations->result('record');
 		$count = 0;
 		$donations->_data_seek(0);
+		og::info("Tracking donations 8");
 	  while ($row = $donations->_fetch_object())
 	  {
-			log::info("Tracking donations 8 - $count");
+			log::info("Tracking donations 9 - $count");
 
 			$count++;
 			$donation = new record();
@@ -358,7 +359,7 @@ class donation extends MY_Model
 					$donation->$key = $value;
 			}
 
-			log::info("Tracking donations 9 - $count");
+			log::info("Tracking donations 10 - $count");
 
 			$track = fedex::track($donation->tracking_number);
 			$email = [$donation->donor_org, $donation->donation_id, $donation->fedex()];
