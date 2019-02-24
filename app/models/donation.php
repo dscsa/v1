@@ -350,10 +350,10 @@ class donation extends MY_Model
 
 	  while ($row = $donations->_fetch_object())
 	  {
-			$count++;
-
 			if ( ! ($count % 100))
-			  log::info("Tracking donations 7", $count);
+			  log::info("Tracking donations Loop $count");
+
+		  $count++;
 
 			$donation = new record();
 			foreach ($row as $key => $value)
