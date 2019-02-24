@@ -307,15 +307,10 @@ class donation extends MY_Model
 	function track()
 	{
 
-		log::info("Tracking donations 1");
 		//Hack to temporarily suspend per page limit
-		$per_page = result::$per_page;
+		//$per_page = result::$per_page;
 
-		log::info("Tracking donations 2");
-
-		result::$per_page = 9999;
-
-		log::info("Tracking donations 3");
+		//result::$per_page = 9999;
 
 		//start of OS modifications
 		//check that 'created' is in the past 5 years
@@ -324,38 +319,38 @@ class donation extends MY_Model
 		//check that date received is NULL
 		$created_cutoff = date('Y-m-d H:i:s',strtotime('-3 year'));
 
-		log::info("Tracking donations 4");
+		log::info("Tracking donations 1");
 
 		//This was causing a exhaustion error
 		//$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
 
-		$query = "SELECT donation.*, id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '2016-01-01 00:00:00' AND tracking_number IS NOT NULL";
+		$query = "SELECT tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '$created_cutoff' AND tracking_number IS NOT NULL LIMIT 9999";
 
-		log::info("Tracking donations 5");
+		log::info("Tracking donations 2");
 
 		$donations = $this->db->query($query);
 
-		log::info("Tracking donations 6");
+		log::info("Tracking donations 3 ".$this->db->last_query());
 
 		//end of OS modifications
-		result::$per_page = $per_page;
+		//result::$per_page = $per_page;
 		//End Hack
 
-		log::info("Tracking donations 7");
+		log::info("Tracking donations 4");
 
 		//Make each row a donation record with result(model_name)
 		//This was causing a crash since all rows were prefetched: $donations = $donations->result('record');
 		$count = 0;
 
-		log::info("Tracking donations 8".print_r($donations, true));
+		log::info("Tracking donations 5 |".print_r($donations, true)."|");
 
 		$donations->_data_seek(0);
 
-		log::info("Tracking donations 9");
+		log::info("Tracking donations 6");
 
 	  while ($row = $donations->_fetch_object())
 	  {
-			log::info("Tracking donations 10 - $count");
+			log::info("Tracking donations 7 - $count");
 
 			$count++;
 			$donation = new record();
@@ -364,7 +359,7 @@ class donation extends MY_Model
 					$donation->$key = $value;
 			}
 
-			log::info("Tracking donations 11 - $count");
+			log::info("Tracking donations 8 - $count");
 
 			$track = fedex::track($donation->tracking_number);
 			$email = [$donation->donor_org, $donation->donation_id, $donation->fedex()];
