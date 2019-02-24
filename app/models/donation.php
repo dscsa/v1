@@ -349,6 +349,8 @@ class donation extends MY_Model
 		$donations->_data_seek(0);
 	  while ($row = $donations->_fetch_object())
 	  {
+			log::info("Tracking donations 8 - $count");
+
 			$count++;
 			$donation = new record();
 			foreach ($row as $key => $value)
@@ -356,7 +358,7 @@ class donation extends MY_Model
 					$donation->$key = $value;
 			}
 
-			log::info("Tracking donations 8 - $count");
+			log::info("Tracking donations 9 - $count");
 
 			$track = fedex::track($donation->tracking_number);
 			$email = [$donation->donor_org, $donation->donation_id, $donation->fedex()];
