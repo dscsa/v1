@@ -337,22 +337,27 @@ class donation extends MY_Model
 
 		log::info("Tracking donations 6");
 
-		//Make each row a donation record with result(model_name)
-		$donations = $donations->result('record');
-
-		log::info("Tracking donations 7");
-
 		//end of OS modifications
 		result::$per_page = $per_page;
 		//End Hack
 
-		log::info("Tracking ".count($donations)." donations");
+		log::info("Tracking donations 7");
 
-		/*if (count($donations) == 9999)
-			admin::email('Tracking Max Number of Donations', 'More than 9999 unreceived donations.  Only searching for the first 9999. '.$this->db->last_query());
-		*/
-		foreach($donations as $donation)
-		{
+		//Make each row a donation record with result(model_name)
+		//This was causing a crash since all rows were prefetched: $donations = $donations->result('record');
+		$count = 0;
+		$this->_data_seek(0);
+	  while ($row = $donations->_fetch_object())
+	  {
+			$count++;
+			$donation = new record();
+			foreach ($row as $key => $value)
+			{
+					$donation->$key = $value;
+			}
+
+			log::info("Tracking donations 8 - $count");
+
 			$track = fedex::track($donation->tracking_number);
 			$email = [$donation->donor_org, $donation->donation_id, $donation->fedex()];
 
@@ -405,6 +410,7 @@ class donation extends MY_Model
 				self::pickup($donation->donation_id, strtotime('09:00:00'));
 			}
 		}
+		log::info("Tracked $count donations");
 	}
 
 	function reference($donation)
