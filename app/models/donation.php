@@ -346,7 +346,7 @@ class donation extends MY_Model
 		//Make each row a donation record with result(model_name)
 		//This was causing a crash since all rows were prefetched: $donations = $donations->result('record');
 		$count = 0;
-		$this->_data_seek(0);
+		$donations->_data_seek(0);
 	  while ($row = $donations->_fetch_object())
 	  {
 			$count++;
