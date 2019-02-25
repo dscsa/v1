@@ -312,24 +312,34 @@ class donation extends MY_Model
 
 		//result::$per_page = 9999;
 
-		//start of OS modifications
-		//check that 'created' is in the past 5 years
-		//check that the tracking number is a 15 digit SIRUM standard (not Viewmaster or empty)
-		//check that date verified is NULL
-		//check that date received is NULL
-		$created_cutoff = date('Y-m-d H:i:s',strtotime('-3 year'));
+
+		//depending on time of day, check different date ranges
+		//tracking is triggered around the start of every hour		
+		$curr_hour = intval(gmdate('H')) - 8; //server runs on GMT
+
+		if($curr_hour == 15){ //roughly 3PM PT is when we check labels made between 3-5 years ago, just the once
+	               $cutoff_start = date('Y-m-d H:i:s',strtotime('-5 year'));
+        	       $cutoff_end = date('Y-m-d H:i:s',strtotime('-3 year'));
+		} else if(($curr_hour == 12) OR ($curr_hour == 16)){ // we check for labels from 1-3 years ago, a couple times during the day, at noon and at 4PM PT
+                       $cutoff_start = date('Y-m-d H:i:s',strtotime('-3 year'));                       
+                       $cutoff_end = date('Y-m-d H:i:s',strtotime('-1 year'));
+		} else { //any other time, we check for labels in the last year (as of 02/2019 this was ~9,000)
+                       $cutoff_start = date('Y-m-d H:i:s',strtotime('-1 year'));                       
+                       $cutoff_end = date('Y-m-d H:i:s');
+		} 
+
 
 		log::info("Tracking donations 1");
 
 		//This was causing a exhaustion error
 		//$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
 
-		$query = "SELECT tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND donation.created > '$created_cutoff' AND tracking_number IS NOT NULL LIMIT 9999";
-
+		$query = "SELECT tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL LIMIT 9999";
+		
 		log::info("Tracking donations 2");
 
 		$donations = $this->db->query($query);
-
+		
 		log::info("Tracking donations 3 ".$this->db->last_query());
 
 		//end of OS modifications
