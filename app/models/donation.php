@@ -316,6 +316,9 @@ class donation extends MY_Model
 		//depending on time of day, check different date ranges
 		//tracking is triggered around the start of every hour		
 		$curr_hour = intval(gmdate('H')) - 8; //server runs on GMT
+		
+		$cutoff_start = "";
+		$cutoff_end = "";
 
 		if($curr_hour == 15){ //roughly 3PM PT is when we check labels made between 3-5 years ago, just the once
 	               $cutoff_start = date('Y-m-d H:i:s',strtotime('-5 year'));
