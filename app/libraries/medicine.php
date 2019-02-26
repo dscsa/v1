@@ -22,14 +22,14 @@ class medicine
 		//Is it delimited? Labeler Code should be 5 digits and Product code should be 4 digits.
 		if (count($explode = explode('-', $barcode)) > 1)
 		{
-			if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is delimited");
+			//if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is delimited");
 			return str_pad($explode[0], 5, '0', STR_PAD_LEFT).str_pad($explode[1], 4, '0', STR_PAD_LEFT);
 		}
 
 		//Check for Code 128 Barcode (can be any length but has pretermined beginning 5 digits
 		if (substr($barcode, 0, 5) == '01003')
 		{
-			if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in Code 128 format");
+			//if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in Code 128 format");
 			return substr($barcode, 4, 10);
 		}
 
@@ -45,35 +45,35 @@ class medicine
 			//303780023055 -> 0378-0023-05 Diltiazem 30mg
 			//367877198057 -> 67877-0198-05 Amlodipine 5mg
 			//367877198903 -> 67877-0198-90 Amlodipine 5mg
-			if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in Pharmerica format");
+			//if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in Pharmerica format");
 			$barcode = substr($barcode, 1, 10); // handled later by adding padding for extra digit
 		}
 
 		//Omincare adds two extra digits to the end of the ndc
 		if (strlen($barcode) == 12)
 		{
-			if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in Omnicare format");
+			//if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in Omnicare format");
 			$barcode = substr($barcode, 0, 10);
 		}
 
 		//An EAN 13 barcode
 		if (substr($barcode, 0, 2) == '03' and strlen($barcode) == 13)
 		{
-			if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in EAN format");
+			//if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode is in EAN format");
 			return substr($barcode, 2, 10);
 		}
 
 		//Hopefully in the correct 9 or 11 digit format already
 		if (strlen($barcode) == 9 or strlen($barcode) == 11)
 		{
-			if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode in exact 9 or 11 digit format");
+			//if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode in exact 9 or 11 digit format");
 			return substr($barcode, 0, 9);
 		}
 
 		//Probably 5-4-1, 4-4-2, or 5-3-2 format.  Try as is and with an additional 0 to make a full NDC9
 		if (strlen($barcode) >= 8)
 		{
-			if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode needed one digit padding");
+			//if ( ! \data::get('admin_id')) \log::info("Barcode: $barcode needed one digit padding");
 			return ['0'.substr($barcode, 0, 8), substr($barcode, 0, 5).'0'.substr($barcode, 5, 3), substr($barcode, 0, 9)];
 		}
 

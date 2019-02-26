@@ -607,13 +607,13 @@ class inventory extends MY_Model
 
 
 		//Use regular expressions for validation.
-		log::info('inventory::import preg_match ndc');
+		//log::info('inventory::import preg_match ndc');
 		if (strlen($ndc) > 0 AND ! preg_match('/^[0-9-]+$/', $ndc))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
 		}
 
-		log::info('inventory::import pre_match qty');
+		//log::info('inventory::import pre_match qty');
 		if ($qty AND ! preg_match('/^-?[0-9.]+$/', $qty))
 		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Quantity $qty must be a number"]);
