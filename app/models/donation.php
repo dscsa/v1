@@ -337,7 +337,7 @@ class donation extends MY_Model
 		//This was causing a exhaustion error
 		//$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
 
-		$query = "SELECT tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL LIMIT 9999";
+		$query = "SELECT donor_id, donee_id, tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL LIMIT 9999";
 
 		log::info("Tracking donations 2");
 
@@ -386,7 +386,7 @@ class donation extends MY_Model
 
 			$stage = key($track['success']);
 
-			log::info("debug tracking $count $stage $donation->tracking_number ".print_r($email, true).print_r($donation, true));
+			//log::info("debug tracking $count $stage $donation->tracking_number ".print_r($email, true).print_r($donation, true));
 
 			if ('date_received' == $stage)
 			{
