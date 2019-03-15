@@ -316,14 +316,14 @@ class donation extends MY_Model
 		//depending on time of day, check different date ranges
 		//tracking is triggered around the start of every hour
 		$curr_hour = intval(gmdate('H')) - 8; //server runs on GMT
-
+		
 		$cutoff_start = "";
 		$cutoff_end = "";
 
-		if($curr_hour == 15){ //roughly 3PM PT is when we check labels made between 3-5 years ago, just the once
+		if(($curr_hour == 10) OR ($curr_hour == 15)){ //roughly 3PM PT is when we check labels made between 3-5 years ago, just the once
        $cutoff_start = date('Y-m-d H:i:s',strtotime('-5 year'));
        $cutoff_end = date('Y-m-d H:i:s',strtotime('-3 year'));
-		} else if(($curr_hour == 12) OR ($curr_hour == 16)){ // we check for labels from 1-3 years ago, a couple times during the day, at noon and at 4PM PT
+		} else if(($curr_hour == 9) OR ($curr_hour == 12) OR ($curr_hour == 16)){ // we check for labels from 1-3 years ago, a couple times during the day, at noon and at 4PM PT
        $cutoff_start = date('Y-m-d H:i:s',strtotime('-3 year'));
        $cutoff_end = date('Y-m-d H:i:s',strtotime('-1 year'));
 		} else { //any other time, we check for labels in the last year (as of 02/2019 this was ~9,000)
@@ -342,7 +342,7 @@ class donation extends MY_Model
 		log::info("Tracking donations 2");
 
 		$donations = $this->db->query($query);
-
+		
 		log::info("Tracking donations 3 ".$this->db->last_query());
 
 		//end of OS modifications
@@ -380,6 +380,7 @@ class donation extends MY_Model
 			//Skip if there was an error
 			if($track['error'])
 			{
+				log::info("Tracking Error on Number: ".$donation->tracking_number);
 				log::info("Tracking Error Loop $count ".print_r($track, true));
 				continue;
 			}
