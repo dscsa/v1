@@ -486,18 +486,17 @@ class inventory extends MY_Model
 
 		//GET ALL THE ITEMS OUT OF THE ROW FIRST
 		if(self::isV2()){ //IF A v2 CSV
-			$donation_id = explode(';', $data[self::$bulk['donation_id']]);
-			if (count($donation_id) == 2) {
-			  	$donor_phone = explode('.',$donation_id[0])[0];
-                                $donee_phone = explode('.',$donation_id[1])[0];
-                                $date_verified = explode('.',$donation_id[0])[1];
-				//list($donee_phone, $date_verified, $donor_phone) = $donation_id;
+			$donation_id = explode('.', $data[self::$bulk['donation_id']]);
+			if (count($donation_id) ==3) {
+			  	//$donor_phone = $donation_id[2]//explode('.',$donation_id[0])[0];
+                                //$donee_phone = $donation_id[0]//$explode('.',$donation_id[1])[0];
+                                //$date_verified = $donation_id[1] //explode('.',$donation_id[0])[1];
+				list($donee_phone, $date_verified, $donor_phone) = $donation_id;
 			} else if (count($donation_id) == 1) {
 				return;  //skip repackaged items without an error (shipment.id = recipient phone)
 			} else {
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: could not parse shipment._id.  It should have <donor_phone>.<date_ver>;<donee_phone>.<date_ver>"]);
 			}
-
 			//Format Date appropriately
 			$date_verified = date::format($date_verified, DB_DATE_FORMAT);
 
@@ -533,9 +532,9 @@ class inventory extends MY_Model
 		//If there is a tracking number column, use it
 		if(array_key_exists('tracking_num', self::$bulk)){
 			$tracking_num = $data[self::$bulk['tracking_num']];
-			if(self::isV2()){
-				$tracking_num = substr($tracking_num, 7); //because of how v2 adds seven extra digits to the front
-			}
+			//if(self::isV2()){
+			//	$tracking_num = substr($tracking_num, 7); //because of how v2 adds seven extra digits to the front
+			//}
 		}
 
 		//if there was no tracking number in the columns and if they're not pharmerica
@@ -553,7 +552,6 @@ class inventory extends MY_Model
 				$tracking_num = $m[0];
 			}
 		}
-
 
 
 
@@ -815,17 +813,21 @@ class inventory extends MY_Model
 		}
 
 		$archived_date = '';
-		if(strlen($archived) == 0){
+		if((strlen($archived) == 0) AND (!self::isV2())){ //on V2, we can leave archived blank because sometimes we mark accepted, whereas any other import we don't have this info
 			$archived_date = date('Y-m-d H:i:s');
 		} else {
 			$archived_date = date::format($archived, DB_DATE_FORMAT);
 		}
 
+		$donor_qty = self::isV2() ? NULL : $qty;
+		$donee_qty = self::isV2() ? $qty : NULL;
+
 		//Ok Item should have exactly one drug and one donation/shipment at this point so we should be able to add
 		self::create([
 			'donation_id'	=> $donations[0]->donation_id,
 			'item_id'     => $items[0]->id,
-			'donor_qty'		=> $qty,
+			'donor_qty'		=> $donor_qty,
+			'donee_qty'	=> $donee_qty,
 			'org_id'      => $donations[0]->donee_id,
 			'price' 	 		=> $items[0]->price ? $items[0]->price : 0,
 			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
