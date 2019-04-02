@@ -102,6 +102,23 @@ class donation extends MY_Model
 		}
 	}
 
+
+	//Given a fifteen-digit format, return info for a given donation if exists
+	function pullTrackingInfo($tracking_num)
+	{
+			
+			preg_match('/([0-9]{15})/',$tracking_num,$m);
+			if(count($m) == 0){
+				echo "Error: No tracking number provided";
+			} else {
+				$query = "SELECT *  FROM `donation` WHERE `tracking_number` = '$tracking_num'";
+				$donations = $this->db->query($query);
+				echo json_encode($donations->result());
+			}
+			flush();
+	}
+
+
 	// 1. Update items with a donation_id and price info
 	// 2. Insert remaining qty (if any) into a new item
 	// 3. Update donation's manifest when we add items
