@@ -440,13 +440,69 @@ class fedex extends MY_Library
 			return self::track($tracking_number, end($response['success']->TrackDetails)->TrackingNumberUniqueIdentifier);
 		}
 
-		/* Code Definition
-			AA At Airport, EO Enroute to Origin Airport, AD At Delivery, EP Enroute to Pickup, AF At FedEx Facility, FD At FedEx Destination
-			AP At Pickup, HL Hold at Location, CA Shipment Canceled, IT In Transit, CH Location Changed, LO Left Origin, DE Delivery Exception
-			OC Order Created, DL Delivered, OD Out for Delivery, DP Departed FedEx Location, PF Plane in Flight, DR Vehicle Furnished, Not Used
-			PL Plane Landed, DS Vehicle dispatched, PU Picked Up, DY Delay, RS Return to Shipper, EA Enroute to Airport delay, SE Shipment
-			Exception, ED Enroute to Delivery, SF At Sort Facility, EO Enroute to Origin airport, SP Split status - multiple statuses,
-			EP Enroute to Pickup, TR Transfer */
+/* Code Definitions
+https://www.fedex.com/us/developer/WebHelp/ws/2015/html/WebServicesHelp/WSDVG/4_Tracking_and_Visibility_Services.htm
+
+PF - Plane in Flight,
+AA-At Airport
+PL-Plane Landed
+AC-At Canada Post facility
+PM-In Progress
+AD-At Delivery
+PU-Picked Up
+AF-At FedEx Facility
+PX-Picked up (see Details)
+AP-At Pickup
+RR-CDO requested
+AR-Arrived at
+RM-CDO Modified
+AX-At USPS facility
+RC-CDO Cancelled
+CA-Shipment Cancelled
+RS-Return to Shipper
+CH-Location Changed
+RP-Return label link emailed to return sender
+DD-Delivery Delay
+LP-Return label link cancelled by shipment originator
+DE-Delivery Exception
+RG-Return label link expiring soon
+DL-Delivered
+RD-Return label link expired
+DP-Departed
+SE-Shipment Exception
+DR-Vehicle furnished but not used
+SF-At Sort Facility
+DS-Vehicle Dispatched
+SP-Split Status
+DY-Delay
+TR-Transfer
+EA-Enroute to Airport
+ED-Enroute to Delivery
+CC-Cleared Customs
+EO-Enroute to Origin Airport
+CD-Clearance Delay
+EP-Enroute to Pickup
+CP-Clearance in Progress
+FD-At FedEx Destination
+EA-Export Approved
+HL-Hold at Location
+SP-Split Status
+IT-In Transit
+IX-In transit (see Details)
+CA-Carrier
+LO-Left Origin
+RC-Recipient
+OC-Order Created
+SH-Shipper
+OD-Out for Delivery
+CU-Customs
+OF-At FedEx origin facility
+BR-Broker
+OX-Shipment information sent to USPS
+TP-Transfer Partner
+PD-Pickup Delay
+SP-Split status
+ */
 
 		switch($response['success']->TrackDetails->Events->EventType)
 		{
