@@ -188,7 +188,8 @@ class defaults
 			'Florida' =>
 			[
 				70 => 'Pharmacy',
-				79 => 'Dept of Children and Families Licensee'
+				79 => 'Dept of Children and Families Licensee',
+				78 => 'Reverse Distributor'
 			],
 
 			'Iowa' =>
