@@ -702,51 +702,44 @@ class inventory extends MY_Model
 		//Look up the uploaded NDC in our database.
 		$items = [];
 		
-		if(strlen($colorado_exact_ndc) > 0){
+		if(strlen($colorado_exact_ndc) > 0){//For Colorado, need to look up only by NDC, if not found it may be a drug to add, but only if it has full set of new rows
 			//search using colorado ndc
-			$ndc_res = explode('-', $colorado_exact_ndc); //may need to pad the NDC with leading 0s into the 5-4 format so split it apart.
-                        if(count($ndc_res) == 3){
-				$label = $ndc_res[0];
-				$prod = $ndc_res[1];
-				$ndc = str_pad($label, 5, '0', STR_PAD_LEFT).str_pad($prod, 4, '0', STR_PAD_LEFT);
-	                        $items = item::search(['upc' => $ndc]);	
-			} else {
-                             return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not formatted as expected for Colorado, expect label-prod-package formatted code."]);
-			}	
-			//if no match throw immediate error for this row, dont try name
-			if(count($items) == 0){
-	                     return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not found and this is a Colorado CSV that requires exact match"]);
+			$items = item::search(['upc' => $colorado_exact_ndc]); //switched to use find so its as broad a search as allowed in the UI searchbar
+		} else {
+			if(strlen($ndc) > 0){ //if not required, use the regular ndc field, which for coleman is going to match, for everyone else, it may or may not match
+				$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
+				$items = item::search(['upc' => $ndc]);
 			}
-			
-		} else if(strlen($ndc) > 0){ //if not required, use the regular ndc field, which for coleman is going to match, for everyone else, it may or may not match
-			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
-			$items = item::search(['upc' => $ndc]);
-		}
 
-
-		if(count($items) == 0){ 
-			$query = "SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
-                                        FROM item
-                                        USE INDEX (name_fulltext)
-                                        WHERE `item`.`archived` = 0
-                                        AND `name` LIKE ".$this->db->escape(str_replace(" ","%",$name)).
-                                        " ORDER BY item.updated DESC
-                                        LIMIT 1";
-			$temp_items = $this->db->query($query);
-			$looked_up_by_name = true;
-			if(count($temp_items->result()) > 0){
-				$items[] = $temp_items->result()[0];
+			if(count($items) == 0){ 
+				$query = "SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
+                                	        FROM item
+                                	        USE INDEX (name_fulltext)
+                                        	WHERE `item`.`archived` = 0
+           	                                AND `name` LIKE ".$this->db->escape(str_replace(" ","%",$name)).
+                   	                     " ORDER BY item.updated DESC
+                        	                LIMIT 1";
+				$temp_items = $this->db->query($query);
+				$looked_up_by_name = true;
+				if(count($temp_items->result()) > 0){
+					$items[] = $temp_items->result()[0];
+				}
 			}
 		}
 
 		//If the NDC does not yet exist, try to create a new drug with it.
-		if (count($items) == 0)
+		if(count($items) == 0)
 		{
 			//We can only create a drug if we were provided a drug name.
 			if (!$name OR strlen($name) === 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not found and no name field was provided (column can be drug.generic, Drug Name, Drug Label Name"]);
 			if(!$ndc OR strlen($name) === 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $name was not found and no ndc field was provided"]);
+
+			//If there was no match for an exact colorado ndc, only add if they have rx_otc column, which only appears if someone is trying to add ndc's
+			if((strlen($colorado_exact_ndc) > 0) AND (!$rx_otc OR strlen($rx_otc) === 0))
+				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $colorado_exact_ndc was not found and row doesn't have required info for adding new ndc to DB"]);
+
 
 			$upc = '';
 
@@ -762,7 +755,11 @@ class inventory extends MY_Model
 				$upc = str_pad($label, 5, '0', STR_PAD_LEFT).str_pad($prod, 4, '0', STR_PAD_LEFT);
 
 			} else {
-				$upc =  substr($ndc, 0, 9);
+				if(strlen($colorado_exact_ndc) > 0){
+					$upc = str_pad($colorado_exact_ndc,9,'0',STR_PAD_LEFT); //pad in case it got chopped up
+				} else {
+					$upc =  substr($ndc, 0, 9);
+				}
 			}
 
 			$drug->price = $price ? $price : 0;
@@ -782,11 +779,20 @@ class inventory extends MY_Model
 		//If the NDC has mutiple matches in our DB then something is wrong!
 		if ((count($items) > 1) AND (!$looked_up_by_name))
 		{
+			//For colorado exact ndc's, if we've got multiple matches, do a name match
+			$name_trim = explode(" ",$name)[0];
+			
 			$results = [];
+			$name_match = false;
 			foreach($items as $item) {
+				if((strlen($colorado_exact_ndc) > 0) AND (strpos($item->name,$name_trim) !== false)){
+					$items = array();
+					$items[] = $item;
+					$name_match = true;
+				} 
 				$results[] = $item->upc;
 			}
-			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
+			if(!$name_match) return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
 		}
 
 		//Look up the uploaded donation/shipment in our DB
