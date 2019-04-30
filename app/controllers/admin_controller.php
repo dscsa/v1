@@ -270,24 +270,47 @@ function index()
 		user::login($org_id, 'admin');
 		$v = [];
 
+
+		$this->load->helper('download');
+		$error_filename = "import_errors";
+		$filepath = $_SERVER["DOCUMENT_ROOT"].'/'.$error_filename.'.csv';
+
+
 		if (valid::form())
 		{
 			switch(data::post('button'))
 			{
-				case 'Import v2 Transactions':
+				case 'Import CSVs':
 					$partial = item::csv('inventory', 'import');
-
-					$name = 'Completed Import Errors';
-
-					if ($partial) {
-						$name = 'Partial Upload Errors. Reupload file to resume';
-						inventory::$bulk['alerts'][] = "Uploaded Rows ".($partial - 10000)."-$partial. Reupload file to resume at Row $partial.";
+					
+					$success = '';
+					$error_arr = [];
+					$num_errors = 0;
+					
+					if ((count(inventory::$bulk['alerts']) > 6) || ((count(inventory::$bulk['alerts']) > 1) && (strlen(inventory::$bulk['pharmericaMonth']) == 0)))
+					{
+						$success .= 'Following unique errors:';
+						$output = fopen($filepath, 'w');
+						for($i = 0; $i < count(inventory::$bulk['alerts']); $i++){
+							$error_text = array_values(array_slice(inventory::$bulk['alerts'][$i], -1))[0];
+							if(strpos($error_text,"Donation had to be created") === false){
+								if(strpos(strtolower($error_text), "beyond row limit") === false){
+									$num_errors += 1;
+								}
+								fputcsv($output, inventory::$bulk['alerts'][$i]);
+							}
+							if(!in_array($error_text, $error_arr) AND strlen($error_text) > 0 AND $error_text !== 'error'){
+								$success .= '<br>'.$error_text;
+								$error_arr[] = $error_text;
+							}
+						}
 					}
-
-					if (count(inventory::$bulk['alerts']) > 1)
-					  file::download_csv($name, inventory::$bulk['alerts']);
-
-					return;
+					$v['message'] = html::info($success, '', ['style' => 'text-align:left']);
+					break;
+				case 'Get Last Batch of Errors':
+			               ob_clean();
+		                       force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
+				       break;	
 				case 'Update NDCs':     item::csv('medicine', 'ndc', "\t"); break;
 				case 'Update Prices':   item::csv('medicine', 'price'); break;
 				case 'Update Images':   item::url('medicine', 'image'); break;

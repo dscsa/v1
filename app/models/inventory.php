@@ -414,11 +414,11 @@ class inventory extends MY_Model
 		//set_time_limit(5);
 
 		log::info('inventory::import');
-
+		
 		if((self::isTrusted()) AND ($row > 1)){
 			log::info('inventory::import isTrusted');
-      			echo "TRUSTED";
-			flush();
+      			//echo "TRUSTED";
+			//flush();
 			//barebones code to handle periodically adding new ndcs or updating prices
 			//the 'trusted_source' tag only gets used by OS or AK, with well-formatted data
 			$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
@@ -464,15 +464,9 @@ class inventory extends MY_Model
 			}
 
 		if($row % 50 == 0){
-			//header("Refresh:0");
-			//header("HTTP/1.0 102 Processing");
 			log::info('inventory::import row updates');
 			echo "Processing row: ".$row."<br>";
-			//flush();
-			print_r("...<br>");
-			//ob_flush();
-			//ob_start();
-			//return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
+			flush();
 		}
 
 		//if($row > 300){
@@ -798,6 +792,7 @@ class inventory extends MY_Model
 		//Look up the uploaded donation/shipment in our DB
 		//$donations = donation::search(['date_verified' => $date_verified]);
 		$donations = [];
+		
 		if(!self::isPharmerica()){ //If not Pharmerica, then use tracking number
 			if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['donation'][0]->tracking_number == $tracking_num)){
 				$donations = self::$bulk['quasi_cache']['donation'];
@@ -839,7 +834,7 @@ class inventory extends MY_Model
 					}
 				} else { //then its V2,Coleman, or Polaris without a tracking number in that row and it uses just tracking number
 					$donations = donation::search(['tracking_number' => $tracking_num]);
-                              		self::$bulk['quasi_cache']['donation'] = $donations;
+                              		if(count($donations) > 0) self::$bulk['quasi_cache']['donation'] = $donations;
 				}
 			}
 		} else { //If pharmerica, lookup by dummy tracking number name
