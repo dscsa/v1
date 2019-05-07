@@ -411,6 +411,97 @@ function translate_num_to_month($raw){
 		return self::$bulk['alerts'][] = $data; //copy in the first 5 rows so you can reupload with same code
 	}
 
+	//Given name and/or NDC, and maybe exact_ndc, performs searching
+	function lookUpItem($colorado_exact_ndc,$ndc,$name){
+		$items = [];
+		$looked_up_by_name = false;
+		if(strlen($colorado_exact_ndc) > 0){//For Colorado, need to look up only by NDC, if not found it may be a drug to add, but only if it has full set of new rows
+			//search using colorado ndc
+			$items = item::search(['upc' => $colorado_exact_ndc]); //switched to use find so its as broad a search as allowed in the UI searchbar
+		} else {
+			if(strlen($ndc) > 0){ //if not required, use the regular ndc field, which for coleman is going to match, for everyone else, it may or may not match
+				$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
+				$items = item::search(['upc' => $ndc]);
+			}
+
+			if(count($items) == 0){
+				$query = "SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
+																					FROM item
+																					USE INDEX (name_fulltext)
+																					WHERE `item`.`archived` = 0
+																						AND `name` LIKE ".$this->db->escape(str_replace(" ","%",$name)).
+																				 " ORDER BY item.updated DESC
+																					LIMIT 1";
+				$temp_items = $this->db->query($query);
+				$looked_up_by_name = true;
+				if(count($temp_items->result()) > 0){
+					$items[] = $temp_items->result()[0];
+				}
+			}
+		}
+
+		//If the NDC has mutiple matches in our DB then something is wrong!
+		//try to do a name match
+		if ((count($items) > 1) AND (!$looked_up_by_name))
+		{
+			//For colorado exact ndc's, if we've got multiple matches, do a name match
+			$name_trim = explode(" ",$name)[0];
+
+			$results = [];
+			$name_match = false;
+			foreach($items as $item) {
+				if((strlen($colorado_exact_ndc) > 0) AND (strpos($item->name,$name_trim) !== false)){
+					$items = array();
+					$items[] = $item; //so items will be back to one length
+					$name_match = true;
+				}
+				$results[] = $item->upc;
+			}
+		}
+
+		return $items;
+
+	}
+
+	//Given all relavant info, adds a drug to the database
+	function addDrug($name,$row,$colorado_exact_ndc,$rx_otc,$ndc,$price,$price_date,$price_type,$upc,$mfg,$url,$description,$brand_generic){
+
+					$upc = '';
+
+					$drug = (object) [ //these qualities, plus upc (see past next if/else) will always be added
+						'updated'     => gmdate(DB_DATE_FORMAT),
+						'type'			  => 'medicine',
+						'name' 			  => $name,
+						//'description'	=> ($description ?: $name)." (Rx ".($description ? 'Brand' : 'Generic').")",
+					];
+
+					if(self::isV2()){ //V2 is only one where ndc is dash-separated
+						list($label, $prod) = explode('-', $ndc); //may need to pad the NDC with leading 0s into the 5-4 format so split it apart.
+						$upc = str_pad($label, 5, '0', STR_PAD_LEFT).str_pad($prod, 4, '0', STR_PAD_LEFT);
+
+					} else {
+						if(strlen($colorado_exact_ndc) > 0){
+							$upc = str_pad($colorado_exact_ndc,9,'0',STR_PAD_LEFT); //pad in case it got chopped up
+						} else {
+							$upc =  substr($ndc, 0, 9);
+						}
+					}
+
+					$drug->price = $price ? $price : 0;
+					$drug->price_date = $price_date ? $price_date : '0000-00-00 00:00:00';
+					$drug->price_type = $price_type? $price_type : '';
+					$drug->upc = $upc;
+					$drug->mfg = $mfg;
+					$drug->url = $url;
+					$built_description = ($description ?: $name)." (".$rx_otc." ".$brand_generic.")";
+					$drug->description = $built_description;
+					//Create the drug and store its id into an array
+					$this->db->insert('item', $drug);
+					$drug->id = $this->db->insert_id();
+					return $drug;
+	}
+
+
 	//Function that gets pinged by a GSheet WebApp, and given two urls
 	//url_a will point to a source of some batches of data to import. We send a GET request to that link and parse the JSON there
 	//url_b will be listening for a POST request with relavant results after we complete the import
@@ -494,9 +585,9 @@ function translate_num_to_month($raw){
 			//Extract the big 3 for all csv types. Only QTY is strictly enforced from the start
 			$ndc = array_key_exists('ndc', self::$bulk) ? trim(str_replace("'0", "0", $data[self::$bulk['ndc']])) : '';
 			$qty = array_key_exists('qty', self::$bulk) ? $data[self::$bulk['qty']] : '';
-			if(!$qty){
+			if(!$qty)
 				return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
-			}
+
 			$name = array_key_exists('name', self::$bulk) ? $data[self::$bulk['name']] : '';
 
 
@@ -539,128 +630,45 @@ function translate_num_to_month($raw){
 		//Use regular expressions for validation.
 		//log::info('inventory::import preg_match ndc');
 		if ((strlen($ndc) > 0) AND (strlen($colorado_exact_ndc) == 0) AND (! preg_match('/^[0-9-]+$/', $ndc)))
-		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: NDC $ndc must be a number"]);
-		}
 
 		//log::info('inventory::import pre_match qty');
 		if ($qty AND ! preg_match('/^-?[0-9.]+$/', $qty))
-		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Quantity $qty must be a number"]);
-		}
 
 		if (strlen($exp) > 0 AND ! strtotime($exp))
-		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Expiration $exp must be empty or a date"]);
-		}
 
 		if (strlen($archived) > 0 AND ! strtotime($archived))
-		{
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Archived $archived must be empty or a date"]);
-		}
 
 
 		//------Look up the item ------------------
-		$looked_up_by_name = false;
-		$items = [];
+		$items = self::lookUpItem($colorado_exact_ndc,$ndc,$name);
 
-		if(strlen($colorado_exact_ndc) > 0){//For Colorado, need to look up only by NDC, if not found it may be a drug to add, but only if it has full set of new rows
-			//search using colorado ndc
-			$items = item::search(['upc' => $colorado_exact_ndc]); //switched to use find so its as broad a search as allowed in the UI searchbar
-		} else {
-			if(strlen($ndc) > 0){ //if not required, use the regular ndc field, which for coleman is going to match, for everyone else, it may or may not match
-				$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
-				$items = item::search(['upc' => $ndc]);
-			}
-
-			if(count($items) == 0){
-				$query = "SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
-																					FROM item
-																					USE INDEX (name_fulltext)
-																					WHERE `item`.`archived` = 0
-																						AND `name` LIKE ".$this->db->escape(str_replace(" ","%",$name)).
-																				 " ORDER BY item.updated DESC
-																					LIMIT 1";
-				$temp_items = $this->db->query($query);
-				$looked_up_by_name = true;
-				if(count($temp_items->result()) > 0){
-					$items[] = $temp_items->result()[0];
-				}
-			}
+		if(count($items) > 1){
+			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
 		}
 
 		//If the NDC does not yet exist, try to create a new drug with it.
 		if(count($items) == 0)
-		{
+		{ //try to add drug if not an error
 			//We can only create a drug if we were provided a drug name.
 			if (!$name OR strlen($name) === 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc was not found and no name field was provided (column can be drug.generic, Drug Name, Drug Label Name"]);
 			if(!$ndc OR strlen($name) === 0)
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $name was not found and no ndc field was provided"]);
-
 			//If there was no match for an exact colorado ndc, only add if they have rx_otc column, which only appears if someone is trying to add ndc's
 			if((strlen($colorado_exact_ndc) > 0) AND (!$rx_otc OR strlen($rx_otc) === 0))
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $colorado_exact_ndc was not found and row doesn't have required info for adding new ndc to DB"]);
-
-
-			$upc = '';
-
-			$drug = (object) [ //these qualities, plus upc (see past next if/else) will always be added
-				'updated'     => gmdate(DB_DATE_FORMAT),
-				'type'			  => 'medicine',
-				'name' 			  => $name,
-				//'description'	=> ($description ?: $name)." (Rx ".($description ? 'Brand' : 'Generic').")",
-			];
-
-			if(self::isV2()){ //V2 is only one where ndc is dash-separated
-				list($label, $prod) = explode('-', $ndc); //may need to pad the NDC with leading 0s into the 5-4 format so split it apart.
-				$upc = str_pad($label, 5, '0', STR_PAD_LEFT).str_pad($prod, 4, '0', STR_PAD_LEFT);
-
-			} else {
-				if(strlen($colorado_exact_ndc) > 0){
-					$upc = str_pad($colorado_exact_ndc,9,'0',STR_PAD_LEFT); //pad in case it got chopped up
-				} else {
-					$upc =  substr($ndc, 0, 9);
-				}
-			}
-
-			$drug->price = $price ? $price : 0;
-			$drug->price_date = $price_date ? $price_date : '0000-00-00 00:00:00';
-			$drug->price_type = $price_type? $price_type : '';
-			$drug->upc = $upc;
-			$drug->mfg = $mfg;
-			$drug->url = $url;
-			$built_description = ($description ?: $name)." (".$rx_otc." ".$brand_generic.")";
-			$drug->description = $built_description;
-			//Create the drug and store its id into an array
-			$this->db->insert('item', $drug);
-			$drug->id = $this->db->insert_id();
-			$items[] = $drug;
+			//then add them and return item
+			$items[] = self::addDrug($name,$row,$colorado_exact_ndc,$rx_otc,$ndc,$price,$price_date,$price_type,$upc,$mfg,$url,$description,$brand_generic);
 		}
 
-		//If the NDC has mutiple matches in our DB then something is wrong!
-		if ((count($items) > 1) AND (!$looked_up_by_name))
-		{
-			//For colorado exact ndc's, if we've got multiple matches, do a name match
-			$name_trim = explode(" ",$name)[0];
-
-			$results = [];
-			$name_match = false;
-			foreach($items as $item) {
-				if((strlen($colorado_exact_ndc) > 0) AND (strpos($item->name,$name_trim) !== false)){
-					$items = array();
-					$items[] = $item;
-					$name_match = true;
-				}
-				$results[] = $item->upc;
-			}
-			if(!$name_match) return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
-		}
 
 		//--------End of search for item--------------
 
 		//-----Look up the donation--------------
-
 
 		$filename = array_key_exists('orig_filename', self::$bulk['quasi_cache']) ? self::$bulk['quasi_cache']['orig_filename'] : data::post('orig_filename');
 		self::$bulk['quasi_cache']['orig_filename'] = $filename;
