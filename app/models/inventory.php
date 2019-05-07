@@ -456,6 +456,7 @@ function translate_num_to_month($raw){
 
 		log::info('inventory::import');
 
+		//Boilerplate handling of special causes ----------------------------
 		if($row > 2500){
       return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 		}
@@ -477,6 +478,8 @@ function translate_num_to_month($raw){
 			flush();
 		}
 
+		//-----------------------------------------------------------
+
 		$filename = array_key_exists('orig_filename', self::$bulk['quasi_cache']) ? self::$bulk['quasi_cache']['orig_filename'] : data::post('orig_filename');
 		self::$bulk['quasi_cache']['orig_filename'] = $filename;
 
@@ -486,26 +489,36 @@ function translate_num_to_month($raw){
 	  	$donor_phone = '';
 	  	$exp = '';
 	  	$archived = '';
-	  	$description = '';
-	  	$price_date = '';
-	  	$goodrx = '';
-	  	$nadac = '';
-	  	$price = '';
-	  	$price_type = '';
-			$rx_otc = '';
-			$brand_generic = '';
-			$mfg = '';
-			$url = '';
-			$colorado_exact_ndc = '';
 
-	  	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris).
-	  	//it will not be used for Pharmerica
-	  	$tracking_num = '';
+	  	$tracking_num = ''; 	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris).
+
+
+			//Extract the big 3 for all csv types. Only QTY is strictly enforced from the start
+			$ndc = array_key_exists('ndc', self::$bulk) ? trim(str_replace("'0", "0", $data[self::$bulk['ndc']])) : '';
+			$qty = array_key_exists('qty', self::$bulk) ? $data[self::$bulk['qty']] : '';
+			if(!$qty){
+				return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
+			}
+			$name = array_key_exists('name', self::$bulk) ? $data[self::$bulk['name']] : '';
+
+
+			//Pull some data that may only be relavant if we need to add the drug
+			$description = array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
+			$price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
+			$goodrx = array_key_exists('goodrx', self::$bulk) ? $data[self::$bulk['goodrx']] : "";
+			$nadac = array_key_exists('nadac', self::$bulk) ? $data[self::$bulk['nadac']] : "";
+			$price = $goodrx ?: $nadac;
+			$price_type = $goodrx ? 'goodrx' : 'nadac';
+			$rx_otc = array_key_exists('rx_otc', self::$bulk) ? $data[self::$bulk['rx_otc']] : "";
+			$brand_generic = array_key_exists('brand_generic', self::$bulk) ? $data[self::$bulk['brand_generic']] : "";
+			$mfg = array_key_exists('mfg', self::$bulk) ? $data[self::$bulk['mfg']] : "";
+			$url = array_key_exists('url', self::$bulk) ? $data[self::$bulk['url']] : "";
+			$colorado_exact_ndc = array_key_exists('colorado_exact_ndc', self::$bulk) ? $data[self::$bulk['colorado_exact_ndc']] : "";
+
 
 		//v2 shipment._id is in <10 digit recipient phone>.JSON Date.<10 digit donor phone>
 		//v1 only accepts 11 character int for donation_id.
 
-		//GET ALL THE ITEMS OUT OF THE ROW FIRST
 		if(self::isV2()){ //IF A v2 CSV
 			$donation_id = explode('.', $data[self::$bulk['donation_id']]);
 			if (count($donation_id) ==3) {
@@ -531,35 +544,9 @@ function translate_num_to_month($raw){
 			$archived = array_key_exists('verified', self::$bulk) ?  $data[self::$bulk['verified']] : "";
 		}
 
-		//Pull some data that may only be relavant if we need to add the drug
-		$description = array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
-                $price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
-                $goodrx = array_key_exists('goodrx', self::$bulk) ? $data[self::$bulk['goodrx']] : "";
-                $nadac = array_key_exists('nadac', self::$bulk) ? $data[self::$bulk['nadac']] : "";
-                $price = $goodrx ?: $nadac;
-                $price_type = $goodrx ? 'goodrx' : 'nadac';
-                $rx_otc = array_key_exists('rx_otc', self::$bulk) ? $data[self::$bulk['rx_otc']] : "";
-                $brand_generic = array_key_exists('brand_generic', self::$bulk) ? $data[self::$bulk['brand_generic']] : "";
-                $mfg = array_key_exists('mfg', self::$bulk) ? $data[self::$bulk['mfg']] : "";
-                $url = array_key_exists('url', self::$bulk) ? $data[self::$bulk['url']] : "";
-		$colorado_exact_ndc = array_key_exists('colorado_exact_ndc', self::$bulk) ? $data[self::$bulk['colorado_exact_ndc']] : "";
 
 
 
-		$ndc = '';
-		//Extract these 3 out here so we do it for non-V2 csv's as well
-		if(array_key_exists('ndc', self::$bulk)){
-			$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
-		}
-
-		$qty = $data[self::$bulk['qty']];
-		if(!$qty){
-			return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find a quantity. Make sure column is called qty.to, Return Quantity or Return Qty"]);
-		}
-		$name = '';
-		if(array_key_exists('name', self::$bulk)){
-			$name = $data[self::$bulk['name']];
-		}
 		//If there is a tracking number column, use it
 		if(array_key_exists('tracking_num', self::$bulk)){
 			$tracking_num = $data[self::$bulk['tracking_num']];
