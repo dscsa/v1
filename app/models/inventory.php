@@ -480,17 +480,15 @@ function translate_num_to_month($raw){
 
 		//-----------------------------------------------------------
 
-		$filename = array_key_exists('orig_filename', self::$bulk['quasi_cache']) ? self::$bulk['quasi_cache']['orig_filename'] : data::post('orig_filename');
-		self::$bulk['quasi_cache']['orig_filename'] = $filename;
 
-	  	//Initialize these to empty here because they all only get filled for V2 data
+	  	//Initialize with most of the data actually in the row
 	  	$donee_phone = '';
 	  	$date_verified = '';
 	  	$donor_phone = '';
 	  	$exp = '';
 	  	$archived = '';
 
-	  	$tracking_num = ''; 	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris).
+	  	$tracking_num = array_key_exists('tracking_num', self::$bulk) ? $data[self::$bulk['tracking_num']] : ''; 	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris).
 
 
 			//Extract the big 3 for all csv types. Only QTY is strictly enforced from the start
@@ -518,21 +516,16 @@ function translate_num_to_month($raw){
 
 		//v2 shipment._id is in <10 digit recipient phone>.JSON Date.<10 digit donor phone>
 		//v1 only accepts 11 character int for donation_id.
-
 		if(self::isV2()){ //IF A v2 CSV
 			$donation_id = explode('.', $data[self::$bulk['donation_id']]);
 			if (count($donation_id) ==3) {
-			  	//$donor_phone = $donation_id[2]//explode('.',$donation_id[0])[0];
-                                //$donee_phone = $donation_id[0]//$explode('.',$donation_id[1])[0];
-                                //$date_verified = $donation_id[1] //explode('.',$donation_id[0])[1];
 				list($donee_phone, $date_verified, $donor_phone) = $donation_id;
 			} else if (count($donation_id) == 1) {
 				return;  //skip repackaged items without an error (shipment.id = recipient phone)
 			} else {
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: could not parse shipment._id.  It should have <donor_phone>.<date_ver>;<donee_phone>.<date_ver>"]);
 			}
-			//Format Date appropriately
-			$date_verified = date::format($date_verified, DB_DATE_FORMAT);
+			$date_verified = date::format($date_verified, DB_DATE_FORMAT); //Format Date appropriately
 
 			//Format Phone numbers appropriately
 			$donor_phone = '('.substr($donor_phone, 0, 3).') '.substr($donor_phone, 3, 3).'-'.substr($donor_phone, 6, 4);
@@ -540,87 +533,8 @@ function translate_num_to_month($raw){
 
 			//extract data in variables
 			$exp = $data[self::$bulk['exp']];
-
 			$archived = array_key_exists('verified', self::$bulk) ?  $data[self::$bulk['verified']] : "";
 		}
-
-
-
-
-		//If there is a tracking number column, use it
-		if(array_key_exists('tracking_num', self::$bulk)){
-			$tracking_num = $data[self::$bulk['tracking_num']];
-			//if(self::isV2()){
-			//	$tracking_num = substr($tracking_num, 7); //because of how v2 adds seven extra digits to the front
-			//}
-		}
-
-		//if there was no tracking number in the columns and if they're not pharmerica
-		//then we need a tracking number in file name, else the whole thign won't work
-		if((!array_key_exists('tracking_num', self::$bulk)) AND !self::isPharmerica()){
-			preg_match('/([0-9]{15})/',$filename,$m);
-			if(count($m) == 0){
-				preg_match('/([0-9]{6})/',$filename,$m); //if coleman this will match
-				if(count($m) == 0){
-					return self::$bulk['alerts'][] = array_merge($data, ["Filename must have actual SIRUM tracking number (last 6 or full 15 digits) or needs a column titled 'tracking_num'"]);
-				} else {
-					$tracking_num = '971424215'.$m[0];
-				}
-			} else {
-				$tracking_num = $m[0];
-			}
-		}
-
-
-
-		$donor_id = $donee_id = ''; //only using these if pharmerica
-		$full_name = '';
-		$is_new_facility = False;
-		//for pharmerica, on each row, need to get donor and donee ids
-		if(self::isPharmerica()){
-			//month is self::$bulk['pharmericaMonth'] name is self::$bulk['pharmacy_name']
-			//use name to find the donor id
-			//get the latest donation with that donor id, take the donee id
-			//$full_name = '';
-
-			//double check for weird pharmerica names that are different in their data vs theri viewmsater data
-			if(strtolower($data[self::$bulk['pharmacy_name']]) == "colorado sprngs"){ //THIS IS A TYPEO IN THEIR VIEWMASTER DATA for some reason
-				$full_name = "Pharmerica Colorado Springs";
-			} else {
-				$full_name = "Pharmerica ".$data[self::$bulk['pharmacy_name']]; //then they refer to themselves the same way
-			}
-
-
-			//get the donor & donee id's, either from DB or from cache
-	                $donor_obj = [];
-                	if(array_key_exists('full_name', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['full_name'] == $full_name)){
-				$donor_id = self::$bulk['quasi_cache']['donor_id'];
-				$donee_id = self::$bulk['quasi_cache']['donee_id'];
-                	} else {
-				$is_new_facility = True;
-                        	$donor_obj = org::search(['org.name' => $full_name]);
-				if(count($donor_obj) == 0){
-	                                //weren't able to find pharmacy name
-        	                        return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find Pharmacy with the name: $full_name . Might be under slightly differnt sirum.org name"]);
-                	        } else {
-                        	        //return self::$bulk['alerts'][] = array_merge($data, [$donor_obj[0]->id]);
-                                	//self::$bulk['quasi_cache']['full_name'] = $donor_obj[0]->name; //change cached name
-					$donor_id = $donor_obj[0]->id;
-					//self::$bulk['quasi_cache']['donor_id'] = $donor_id;
-                                	$donations_obj = donation::search(['donor_id' => $donor_id]);
-                                	if(count($donations_obj) == 0){
-                                        	return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find any donations by $full_name that exist. Please create one in V1 (by making a new label) to their appropriate recipient."]);
-                                	}	else {
-                                        	$donee_id = $donations_obj[0]->donee_id;
-                                	}
-                       		 }
-				self::$bulk['quasi_cache']['donee_id'] = $donee_id;
-                                 self::$bulk['quasi_cache']['donor_id'] = $donor_id; //change cached donor id
-				self::$bulk['quasi_cache']['full_name'] = $full_name; //$donor_obj[0]->name; //change cached name
-                	}
-
-		}
-
 
 		//Use regular expressions for validation.
 		//log::info('inventory::import preg_match ndc');
@@ -645,8 +559,9 @@ function translate_num_to_month($raw){
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Archived $archived must be empty or a date"]);
 		}
 
+
+		//------Look up the item ------------------
 		$looked_up_by_name = false;
-		//Look up the uploaded NDC in our database.
 		$items = [];
 
 		if(strlen($colorado_exact_ndc) > 0){//For Colorado, need to look up only by NDC, if not found it may be a drug to add, but only if it has full set of new rows
@@ -660,12 +575,12 @@ function translate_num_to_month($raw){
 
 			if(count($items) == 0){
 				$query = "SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
-                                	        FROM item
-                                	        USE INDEX (name_fulltext)
-                                        	WHERE `item`.`archived` = 0
-           	                                AND `name` LIKE ".$this->db->escape(str_replace(" ","%",$name)).
-                   	                     " ORDER BY item.updated DESC
-                        	                LIMIT 1";
+																					FROM item
+																					USE INDEX (name_fulltext)
+																					WHERE `item`.`archived` = 0
+																						AND `name` LIKE ".$this->db->escape(str_replace(" ","%",$name)).
+																				 " ORDER BY item.updated DESC
+																					LIMIT 1";
 				$temp_items = $this->db->query($query);
 				$looked_up_by_name = true;
 				if(count($temp_items->result()) > 0){
@@ -741,6 +656,77 @@ function translate_num_to_month($raw){
 			}
 			if(!$name_match) return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
 		}
+
+		//--------End of search for item--------------
+
+		//-----Look up the donation--------------
+
+
+		$filename = array_key_exists('orig_filename', self::$bulk['quasi_cache']) ? self::$bulk['quasi_cache']['orig_filename'] : data::post('orig_filename');
+		self::$bulk['quasi_cache']['orig_filename'] = $filename;
+
+		//if there was no tracking number in the columns and if they're not pharmerica
+		//then we need a tracking number in file name, else the whole thign won't work
+		if((!array_key_exists('tracking_num', self::$bulk)) AND !self::isPharmerica()){
+			preg_match('/([0-9]{15})/',$filename,$m);
+			if(count($m) == 0){
+				preg_match('/([0-9]{6})/',$filename,$m); //if coleman this will match
+				if(count($m) == 0){
+					return self::$bulk['alerts'][] = array_merge($data, ["Filename must have actual SIRUM tracking number (last 6 or full 15 digits) or needs a column titled 'tracking_num'"]);
+				} else {
+					$tracking_num = '971424215'.$m[0];
+				}
+			} else {
+				$tracking_num = $m[0];
+			}
+		}
+
+
+
+		$donor_id = $donee_id = ''; //only using these if pharmerica
+		$full_name = '';
+		$is_new_facility = False;
+		//for pharmerica, on each row, need to get donor and donee ids
+		if(self::isPharmerica()){
+			//month is self::$bulk['pharmericaMonth'] name is self::$bulk['pharmacy_name']
+			//use name to find the donor id
+			//get the latest donation with that donor id, take the donee id
+			//$full_name = '';
+
+			//double check for weird pharmerica names that are different in their data vs theri viewmsater data
+			if(strtolower($data[self::$bulk['pharmacy_name']]) == "colorado sprngs"){ //THIS IS A TYPEO IN THEIR VIEWMASTER DATA for some reason
+				$full_name = "Pharmerica Colorado Springs";
+			} else {
+				$full_name = "Pharmerica ".$data[self::$bulk['pharmacy_name']]; //then they refer to themselves the same way
+			}
+
+
+			//get the donor & donee id's, either from DB or from cache
+      $donor_obj = [];
+    	if(array_key_exists('full_name', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['full_name'] == $full_name)){
+				$donor_id = self::$bulk['quasi_cache']['donor_id'];
+				$donee_id = self::$bulk['quasi_cache']['donee_id'];
+    	} else {
+				$is_new_facility = True;
+      	$donor_obj = org::search(['org.name' => $full_name]);
+				if(count($donor_obj) == 0){
+	            //weren't able to find pharmacy name
+              return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find Pharmacy with the name: $full_name . Might be under slightly differnt sirum.org name"]);
+        } else {
+					$donor_id = $donor_obj[0]->id;
+	      	$donations_obj = donation::search(['donor_id' => $donor_id]);
+	      	if(count($donations_obj) == 0){
+	              	return self::$bulk['alerts'][] = array_merge($data, ["Couldn't find any donations by $full_name that exist. Please create one in V1 (by making a new label) to their appropriate recipient."]);
+	      	}	else {
+	              	$donee_id = $donations_obj[0]->donee_id;
+	      	}
+   		 	}
+				self::$bulk['quasi_cache']['donee_id'] = $donee_id;
+	      self::$bulk['quasi_cache']['donor_id'] = $donor_id; //change cached donor id
+				self::$bulk['quasi_cache']['full_name'] = $full_name; //$donor_obj[0]->name; //change cached name
+    	}
+		}
+
 
 		//Look up the uploaded donation/shipment in our DB
 		//$donations = donation::search(['date_verified' => $date_verified]);
@@ -859,6 +845,11 @@ function translate_num_to_month($raw){
 			}
 		}
 
+		//------end of donation searchbar
+
+		//-------Actually import-------
+
+
 		$archived_date = '';
 		if((strlen($archived) == 0) AND (!self::isV2())){ //on V2, we can leave archived blank because sometimes we mark accepted, whereas any other import we don't have this info
 			$archived_date = date('Y-m-d H:i:s');
@@ -898,7 +889,6 @@ function translate_num_to_month($raw){
 			'exp_date'		=> date::format($exp, DB_DATE_FORMAT),
 			'archived'		=> date::format($archived, DB_DATE_FORMAT),
 		];
-
 
 		//We use $archived to designate if the item was accept by the donee into inventory.  If it was accepted
 		//then we need to increment our inventory of this drug by the qty we just added
