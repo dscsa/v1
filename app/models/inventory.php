@@ -464,7 +464,7 @@ function translate_num_to_month($raw){
 	}
 
 	//Given all relavant info, adds a drug to the database
-	function addDrug($name,$row,$colorado_exact_ndc,$rx_otc,$ndc,$price,$price_date,$price_type,$upc,$mfg,$url,$description,$brand_generic){
+	function addDrug($data,$name,$row,$colorado_exact_ndc,$rx_otc,$ndc,$price,$price_date,$price_type,$upc,$mfg,$url,$description,$brand_generic){
 
 					$upc = '';
 
@@ -501,6 +501,69 @@ function translate_num_to_month($raw){
 					return $drug;
 	}
 
+	function buildPhamericaDonation($donor_id,$donee_id){
+		$fake_tracking_number = 'Viewmaster_'.self::$bulk['pharmericaMonth']; //Viewmaster_January_2017
+		//use $donor_id & $donee_id which come from first (or last?) donation
+		//calculate date_shipped using pharmerica month
+		//Add the donation and store its id in an array
+		$donation = (object) [
+			'date_shipped' => self::$bulk['shippedHolder'],
+			'donor_id' => $donor_id,
+			'donee_id' => $donee_id,
+			'tracking_number' => $fake_tracking_number
+		];
+		return $donation;
+	}
+
+
+	//Called last, once all other searching/processing has happened,
+	//actually saves an item, and makes a note in bulk for the controller
+	function saveItem($donations,$items,$qty,$archived,$exp,$row,$ndc){
+		$archived_date = '';
+		if((strlen($archived) == 0) AND (!self::isV2())){ //on V2, we can leave archived blank because sometimes we mark accepted, whereas any other import we don't have this info
+			$archived_date = date('Y-m-d H:i:s');
+		} else {
+			$archived_date = date::format($archived, DB_DATE_FORMAT);
+		}
+
+		$donor_qty = self::isV2() ? NULL : $qty;
+		$donee_qty = self::isV2() ? $qty : NULL;
+
+		//Ok Item should have exactly one drug and one donation/shipment at this point so we should be able to add
+		self::create([
+			'donation_id'	=> $donations[0]->donation_id,
+			'item_id'     => $items[0]->id,
+			'donor_qty'		=> $donor_qty,
+			'donee_qty'	=> $donee_qty,
+			'org_id'      => $donations[0]->donee_id,
+			'price' 	 		=> $items[0]->price ? $items[0]->price : 0,
+			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
+			'price_type' 	=> $items[0]->price_type,
+			'exp_date'		=> date::format($exp, DB_DATE_FORMAT),
+			'archived'		=> $archived_date //date::format($archived, DB_DATE_FORMAT),
+		]);
+
+		self::$bulk['upload'][] =
+		[
+			'row' => $row,
+			'donation_id'	=> $donations[0]->donation_id,
+			'item_id'     => $items[0]->id,
+			'dispensed'		=> $qty,
+			'ndc'        => $ndc,
+			'verb'       => $qty > 0 ? 'increased' : 'decreased',
+			'org_id'      => $donations[0]->donee_id,
+			'price' 	 		=> $items[0]->price ? $items[0]->price : 0,
+			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
+			'price_type' 	=> $items[0]->price_type,
+			'exp_date'		=> date::format($exp, DB_DATE_FORMAT),
+			'archived'		=> date::format($archived, DB_DATE_FORMAT),
+		];
+
+		//We use $archived to designate if the item was accept by the donee into inventory.  If it was accepted
+		//then we need to increment our inventory of this drug by the qty we just added
+		if ( ! $archived)
+			self::increment(['org_id' => $donations[0]->donee_id, 'item_id' => $items[0]->id], $qty);
+	}
 
 	//Function that gets pinged by a GSheet WebApp, and given two urls
 	//url_a will point to a source of some batches of data to import. We send a GET request to that link and parse the JSON there
@@ -569,10 +632,10 @@ function translate_num_to_month($raw){
 			flush();
 		}
 
-		//-----------------------------------------------------------
+		//-----------End of boilerplate-----------------------------
 
+		//--------Start of pulling data from row --------------
 
-	  	//Initialize with most of the data actually in the row
 	  	$donee_phone = '';
 	  	$date_verified = '';
 	  	$donor_phone = '';
@@ -642,6 +705,7 @@ function translate_num_to_month($raw){
 		if (strlen($archived) > 0 AND ! strtotime($archived))
 			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: Archived $archived must be empty or a date"]);
 
+		//-------end of pulling data from row ----------
 
 		//------Look up the item ------------------
 		$items = self::lookUpItem($colorado_exact_ndc,$ndc,$name);
@@ -662,7 +726,7 @@ function translate_num_to_month($raw){
 			if((strlen($colorado_exact_ndc) > 0) AND (!$rx_otc OR strlen($rx_otc) === 0))
 				return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $colorado_exact_ndc was not found and row doesn't have required info for adding new ndc to DB"]);
 			//then add them and return item
-			$items[] = self::addDrug($name,$row,$colorado_exact_ndc,$rx_otc,$ndc,$price,$price_date,$price_type,$upc,$mfg,$url,$description,$brand_generic);
+			$items[] = self::addDrug($data,$name,$row,$colorado_exact_ndc,$rx_otc,$ndc,$price,$price_date,$price_type,$upc,$mfg,$url,$description,$brand_generic);
 		}
 
 
@@ -696,11 +760,6 @@ function translate_num_to_month($raw){
 		$is_new_facility = False;
 		//for pharmerica, on each row, need to get donor and donee ids
 		if(self::isPharmerica()){
-			//month is self::$bulk['pharmericaMonth'] name is self::$bulk['pharmacy_name']
-			//use name to find the donor id
-			//get the latest donation with that donor id, take the donee id
-			//$full_name = '';
-
 			//double check for weird pharmerica names that are different in their data vs theri viewmsater data
 			if(strtolower($data[self::$bulk['pharmacy_name']]) == "colorado sprngs"){ //THIS IS A TYPEO IN THEIR VIEWMASTER DATA for some reason
 				$full_name = "Pharmerica Colorado Springs";
@@ -746,35 +805,34 @@ function translate_num_to_month($raw){
 			} else {
 				//look up by tracking number or date_str if it's Polaris and there's no tracking number
 				if(self::isPolaris() AND !$tracking_num){
-                                        $date_str =  $data[self::$bulk['date_str']];
+          $date_str =  $data[self::$bulk['date_str']];
 					if((array_key_exists('date_str', self::$bulk['quasi_cache'])) AND (self::$bulk['quasi_cache']['date_str'] == $date_str)){
 						$donations = self::$bulk['quasi_cache']['donation'];
 					} else {
 						//take date and look for it in the date_shipped window AND it has donor id for one Polaris
 						$temp_donations = [];
-						log::info('inventory::import DateTime::createFromFormat');
 						$exact_date_obj = DateTime::createFromFormat('Y-m-d',$date_str);
 						if($exact_date_obj){ //makes sure the date is formatted correctly
-        	                                        $pharm_name = $data[self::$bulk['polaris_pharmacy_name']];
-	                                                $pharm_id = org::search(['org.name' => $pharm_name])->id;
-																									log::info('inventory::import DateInterval');
-																									$day_before = $exact_date_obj->sub(new DateInterval('P1D'))->format('Y-m-d');
-                                                	$day_after = $exact_date_obj->add(new DateInterval('P2D'))->format('Y-m-d'); // add two days here because you actually modified original object when subtracting
-                                                	$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
-                                                               FROM (donation)
-                                                                WHERE `donation`.`donor_id` = ".$pharm_id.
-                                                                " AND `donation`.`date_shipped` BETWEEN '".$day_before." 00:00:00' AND '".$day_after." 23:59:59'");
-                                                	if(count($temp_donations->result()) > 0){
-                                                                $donations[] = $temp_donations->result()[0];
-                                               		}
-                                                	if(count($donations) == 0){
-                                                        	return self::$bulk['alerts'][] = array_merge($data, ["NO POLARIS DONATIONS SHIPPED ON THIS DATE"]);
-                                                	} else {
-                                                        	self::$bulk['quasi_cache']['donation'] = $donations;
-                                                	}
+		            $pharm_name = $data[self::$bulk['polaris_pharmacy_name']];
+		            $pharm_id = org::search(['org.name' => $pharm_name])->id;
+								log::info('inventory::import DateInterval');
+								$day_before = $exact_date_obj->sub(new DateInterval('P1D'))->format('Y-m-d');
+		          	$day_after = $exact_date_obj->add(new DateInterval('P2D'))->format('Y-m-d'); // add two days here because you actually modified original object when subtracting
+		          	$temp_donations = $this->db->query("SELECT donation.*,  donation.id as donation_id
+		                         FROM (donation)
+		                          WHERE `donation`.`donor_id` = ".$pharm_id.
+		                          " AND `donation`.`date_shipped` BETWEEN '".$day_before." 00:00:00' AND '".$day_after." 23:59:59'");
+		          	if(count($temp_donations->result()) > 0){
+		                          $donations[] = $temp_donations->result()[0];
+		         		}
+		          	if(count($donations) == 0){
+		                  	return self::$bulk['alerts'][] = array_merge($data, ["NO POLARIS DONATIONS SHIPPED ON THIS DATE"]);
+		          	} else {
+		                  	self::$bulk['quasi_cache']['donation'] = $donations;
+		          	}
 
 						} else {
-                                                        return self::$bulk['alerts'][] = array_merge($data, ["DATE OBJECT NOT FORMATTED CORRECTLY YYYY-MM-DD"]);
+                return self::$bulk['alerts'][] = array_merge($data, ["DATE OBJECT NOT FORMATTED CORRECTLY YYYY-MM-DD"]);
 
 						}
 
@@ -803,21 +861,13 @@ function translate_num_to_month($raw){
 
 		//If donation is not in the DB then try to create it for V2 or Pharmerica ONLY
 		if (count($donations) == 0) {
-			if(self::isPharmerica() OR self::isV2()){
+			if(!self::isPharmerica() AND !self::isV2()){ //then don't create
+				return self::$bulk['alerts'][] = array_merge($data, ["Tracking number $tracking_num does not match database, please correct"]);
+			} else {
 				$donation = [];
 
 				if(self::isPharmerica()){ //Create fake Pharmerica
-					$fake_tracking_number = 'Viewmaster_'.self::$bulk['pharmericaMonth']; //Viewmaster_January_2017
-					//use $donor_id & $donee_id which come from first (or last?) donation
-					//calculate date_shipped using pharmerica month
-					//Add the donation and store its id in an array
-					$donation = (object) [
-						'date_shipped' => self::$bulk['shippedHolder'],
-						'donor_id' => $donor_id,
-						'donee_id' => $donee_id,
-						'tracking_number' => $fake_tracking_number
-					];
-
+					$donation = self::buildPhamericaDonation($donor_id,$donee_id);
 				} else { //Create corresponding V2 donation
 					//Our shipment id had a unique identifier for donor/donee.  If we switch to tracking numbers the two orgs will need to be looked up in the DB
 					$donors = org::search(['phone' => $donor_phone]);
@@ -848,59 +898,13 @@ function translate_num_to_month($raw){
 				$donation->donation_id = $this->db->insert_id();
 				$donations[] = $donation;
 				self::$bulk['quasi_cache']['donation'] = $donations;
-			} else { //if not v2 or Pharmerica, we're not creating new shipments
-				return self::$bulk['alerts'][] = array_merge($data, ["Tracking number $tracking_num does not match database, please correct"]);
 			}
 		}
 
 		//------end of donation searchbar
 
 		//-------Actually import-------
+		self::saveItem($donations,$items,$qty,$archived,$exp,$row,$ndc);
 
-
-		$archived_date = '';
-		if((strlen($archived) == 0) AND (!self::isV2())){ //on V2, we can leave archived blank because sometimes we mark accepted, whereas any other import we don't have this info
-			$archived_date = date('Y-m-d H:i:s');
-		} else {
-			$archived_date = date::format($archived, DB_DATE_FORMAT);
-		}
-
-		$donor_qty = self::isV2() ? NULL : $qty;
-		$donee_qty = self::isV2() ? $qty : NULL;
-
-		//Ok Item should have exactly one drug and one donation/shipment at this point so we should be able to add
-		self::create([
-			'donation_id'	=> $donations[0]->donation_id,
-			'item_id'     => $items[0]->id,
-			'donor_qty'		=> $donor_qty,
-			'donee_qty'	=> $donee_qty,
-			'org_id'      => $donations[0]->donee_id,
-			'price' 	 		=> $items[0]->price ? $items[0]->price : 0,
-			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
-			'price_type' 	=> $items[0]->price_type,
-			'exp_date'		=> date::format($exp, DB_DATE_FORMAT),
-			'archived'		=> $archived_date //date::format($archived, DB_DATE_FORMAT),
-		]);
-
-		self::$bulk['upload'][] =
-		[
-			'row' => $row,
-			'donation_id'	=> $donations[0]->donation_id,
-			'item_id'     => $items[0]->id,
-			'dispensed'		=> $qty,
-			'ndc'        => $ndc,
-			'verb'       => $qty > 0 ? 'increased' : 'decreased',
-			'org_id'      => $donations[0]->donee_id,
-			'price' 	 		=> $items[0]->price ? $items[0]->price : 0,
-			'price_date' 	=> $items[0]->price_date ? $items[0]->price_date : '0000-00-00 00:00:00',
-			'price_type' 	=> $items[0]->price_type,
-			'exp_date'		=> date::format($exp, DB_DATE_FORMAT),
-			'archived'		=> date::format($archived, DB_DATE_FORMAT),
-		];
-
-		//We use $archived to designate if the item was accept by the donee into inventory.  If it was accepted
-		//then we need to increment our inventory of this drug by the qty we just added
-		if ( ! $archived)
-			self::increment(['org_id' => $donations[0]->donee_id, 'item_id' => $items[0]->id], $qty);
 	}
 }  // END OF CLASS
