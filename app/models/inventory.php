@@ -310,15 +310,6 @@ class inventory extends MY_Model
                                 self::$bulk['colorado_exact_ndc'] = $index;
 
 		}
-		//print_r('bulk');
-		//print_r(self::$bulk);
-		/*if (empty($data[self::$bulk['donation_id']])) {
-			echo 'bulk';
-			print_r(self::$bulk);
-			echo 'data';
-			print_r($data);
-		}*/
-
 	}
 
 //Helper function
@@ -345,6 +336,80 @@ function translate_num_to_month($raw){
 		return array_key_exists('date_str', self::$bulk);
 	}
 
+	//Helper function that handles the first row of a csv
+	function processColumns($data){
+		if(strpos($data[0],'Donations Report') !== false){
+			self::$bulk['pharmericaMonth'] = '_'; //a placeholder until we can put a date
+			return self::$bulk['alerts'][] = $data; //just copy taht row into error csv so that we can reupload
+		} else { //then it's not pharmerica, so it has no extra rows above the headers
+			self::setFields($data);
+			return self::$bulk['alerts'][] = array_merge($data, ['error']);
+		}
+	}
+
+	//If we need to update drug information, can use the trusted_source workflow
+	//Shouldn't be often needed given GSheet integration
+	function handleTrustedImport($data){
+		log::info('inventory::import isTrusted');
+		//flush();
+		//barebones code to handle periodically adding new ndcs or updating prices
+		//the 'trusted_source' tag only gets used by OS or AK, with well-formatted data
+		$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
+		$name = $data[self::$bulk['name']];
+		$price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
+		$goodrx = array_key_exists('goodrx', self::$bulk) ? $data[self::$bulk['goodrx']] : "";
+		$nadac = array_key_exists('nadac', self::$bulk) ? $data[self::$bulk['nadac']] : "";
+		$price = $goodrx ?: $nadac;
+		$price_type = $goodrx ? 'goodrx' : 'nadac';
+		$description= array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
+
+		$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
+											$items = item::search(['upc' => $ndc]);
+		if(count($items) == 1){//require exact match
+			//then this NDC was found, and I want to update price
+			$this->db->where('id', $items[0]->id);
+			if($price) $this->db->set('price',$price);
+			if($price_type) $this->db->set('price_type',$price_type);
+			if($price_date) $this->db->set('price_date',$price_date);
+			$this->db->update('item');
+		} else if(count($items) == 0){
+									//then we want to add this ndc, with all relavant info
+			$drug = (object) [ //these qualities, plus upc (see past next if/else) will always be added
+															'updated'     => gmdate(DB_DATE_FORMAT),
+															'type'                    => 'medicine',
+															'name'                    => $name,
+															'description'   => ($description ?: $name)." (Rx ".($description ? 'Brand' : 'Generic').")",
+												];
+
+			$drug->price = $price ? $price : 0;
+												$drug->price_date = $price_date ? $price_date : '0000-00-00 00:00:00';
+												$drug->price_type = $price_type? $price_type : '';
+												$drug->upc = $ndc;
+
+												$this->db->insert('item', $drug);
+
+		}
+	}
+
+	//Handles the special format of Viewmaster files.
+	//The column headings are on the sixth row. Use the info earlier
+	//to get month data
+	//and then just copy in the rest to preserve structure across multiple import/downloads
+	function processPharmericaColumns($data,$row){
+		if($row == 2){
+			$raw_date = $data[0];
+			preg_match('/ ([0-9]{2})\//',$raw_date,$m);
+			$raw_month = substr($m[0], 1, 2);
+			$word_month = self::translate_num_to_month($raw_month);
+			$year = date("Y"); //TODO: Use the date in the sheet, otherwise causes december-of-future error
+			self::$bulk['pharmericaMonth'] =  $word_month.'_'.$year;
+			self::$bulk['shippedHolder'] = date::format($raw_month.'/01/'.$year.' 10:00:00', DB_DATE_FORMAT);
+		} else if($row == 6){
+			self::setFields($data);
+			return self::$bulk['alerts'][] = array_merge($data, ['error']);
+		}
+		return self::$bulk['alerts'][] = $data; //copy in the first 5 rows so you can reupload with same code
+	}
 
 	//Function that gets pinged by a GSheet WebApp, and given two urls
 	//url_a will point to a source of some batches of data to import. We send a GET request to that link and parse the JSON there
@@ -388,97 +453,32 @@ function translate_num_to_month($raw){
 	//An associative array of fields, and the row#
 	function import($data, $row)
 	{
-		//set_time_limit(5);
 
 		log::info('inventory::import');
 
-		if((self::isTrusted()) AND ($row > 1)){
-			log::info('inventory::import isTrusted');
-			//flush();
-			//barebones code to handle periodically adding new ndcs or updating prices
-			//the 'trusted_source' tag only gets used by OS or AK, with well-formatted data
-			$ndc = trim(str_replace("'0", "0", $data[self::$bulk['ndc']]));
-                      	$name = $data[self::$bulk['name']];
-			$price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
-                        $goodrx = array_key_exists('goodrx', self::$bulk) ? $data[self::$bulk['goodrx']] : "";
-                        $nadac = array_key_exists('nadac', self::$bulk) ? $data[self::$bulk['nadac']] : "";
-                        $price = $goodrx ?: $nadac;
-                        $price_type = $goodrx ? 'goodrx' : 'nadac';
-                        $description= array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
-
-			$ndc = str_pad($ndc, 9, '0', STR_PAD_LEFT);
-                        $items = item::search(['upc' => $ndc]);
-                	if(count($items) == 1){//require exact match
-				//then this NDC was found, and I want to update price
-				$this->db->where('id', $items[0]->id);
-				if($price) $this->db->set('price',$price);
-				if($price_type) $this->db->set('price_type',$price_type);
-				if($price_date) $this->db->set('price_date',$price_date);
-				$this->db->update('item');
-			} else if(count($items) == 0){
-                		//then we want to add this ndc, with all relavant info
-				$drug = (object) [ //these qualities, plus upc (see past next if/else) will always be added
-                                'updated'     => gmdate(DB_DATE_FORMAT),
-                                'type'                    => 'medicine',
-                                'name'                    => $name,
-                                'description'   => ($description ?: $name)." (Rx ".($description ? 'Brand' : 'Generic').")",
-                        	];
-
-				$drug->price = $price ? $price : 0;
-	                        $drug->price_date = $price_date ? $price_date : '0000-00-00 00:00:00';
-        	                $drug->price_type = $price_type? $price_type : '';
-                	        $drug->upc = $ndc;
-
-                        	$this->db->insert('item', $drug);
-
-			}
-			return;
+		if($row > 2500){
+      return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
 		}
 
-		if($row > 2500){
-                       return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
-			}
+		if ($row == 1) {//Get indices of column headings
+			return self::processColumns($data);
+		}
 
-		if($row % 50 == 0){
-			log::info('inventory::import row updates');
+		if((self::isTrusted()) AND ($row > 1)){
+			return self::handleTrustedImport($data);
+		}
+
+		if(self::isPharmerica() AND ($row <= 6)){ //if it's pharmerica, and one of the first 6 rows (boilerplate stuff)
+			return self::processPharmericaColumns($data,$row);
+	  }
+
+		if($row % 50 == 0){ //incrementally send this to the browser so it doesn't time out, only matters on manual calls
 			echo "Processing row: ".$row."<br>";
 			flush();
 		}
 
-		$filename = "";
-		if(array_key_exists('orig_filename', self::$bulk['quasi_cache'])){
-			$filename = self::$bulk['quasi_cache']['orig_filename'];
-		} else {
-			$filename = data::post('orig_filename');
-			self::$bulk['quasi_cache']['orig_filename'] = $filename;
-		}
-
-		if ($row == 1) {//Column headings
-			if(strpos($data[0],'Donations Report') !== false){
-				self::$bulk['pharmericaMonth'] = '_'; //a placeholder until we can put a date
-				return self::$bulk['alerts'][] = $data; //just copy taht row into error csv so that we can reupload
-			} else { //then it's not pharmerica, so it has no extra rows above the headers
-				self::setFields($data);
-				return self::$bulk['alerts'][] = array_merge($data, ['error']);
-			}
-	  }
-
-	  	if(self::isPharmerica() AND ($row <= 6)){ //if it's pharmerica, and one of the first 6 rows (boilerplate stuff)
-	  		if($row == 2){
-	  			$raw_date = $data[0];
-	  			preg_match('/ ([0-9]{2})\//',$raw_date,$m);
-	  			$raw_month = substr($m[0], 1, 2);
-	  			$word_month = self::translate_num_to_month($raw_month);
-	  			$year = date("Y");
-	  			self::$bulk['pharmericaMonth'] =  $word_month.'_'.$year;
-	  			self::$bulk['shippedHolder'] = date::format($raw_month.'/01/'.$year.' 10:00:00', DB_DATE_FORMAT);
-	  		} else if($row == 6){
-	  			self::setFields($data);
-	  			return self::$bulk['alerts'][] = array_merge($data, ['error']);
-	  		}
-
-	  		return self::$bulk['alerts'][] = $data; //copy in the first 5 rows so you can reupload with same code
-	  	}
+		$filename = array_key_exists('orig_filename', self::$bulk['quasi_cache']) ? self::$bulk['quasi_cache']['orig_filename'] : data::post('orig_filename');
+		self::$bulk['quasi_cache']['orig_filename'] = $filename;
 
 	  	//Initialize these to empty here because they all only get filled for V2 data
 	  	$donee_phone = '';
@@ -492,11 +492,11 @@ function translate_num_to_month($raw){
 	  	$nadac = '';
 	  	$price = '';
 	  	$price_type = '';
-		$rx_otc = '';
-		$brand_generic = '';
-		$mfg = '';
-		$url = '';
-		$colorado_exact_ndc = '';
+			$rx_otc = '';
+			$brand_generic = '';
+			$mfg = '';
+			$url = '';
+			$colorado_exact_ndc = '';
 
 	  	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris).
 	  	//it will not be used for Pharmerica
