@@ -321,34 +321,11 @@ class inventory extends MY_Model
 
 	}
 
-
-	function translate_num_to_month($raw){
-		if($raw == '01'){
-			return 'January';
-		} else if($raw == '02'){
-			return 'February';
-		} else if($raw == '03'){
-			return 'March';
-		} else if($raw == '04'){
-			return 'April';
-		} else if($raw == '05'){
-			return 'May';
-		} else if($raw == '06'){
-			return 'June';
-		} else if($raw == '07'){
-			return 'July';
-		} else if($raw == '08'){
-			return 'August';
-		} else if($raw == '09'){
-			return 'September';
-		} else if($raw == '10'){
-			return 'October';
-		} else if($raw == '11'){
-			return 'November';
-		} else if($raw == '12'){
-			return 'December';
-		}
-	}
+//Helper function
+function translate_num_to_month($raw){
+	$dateObj   = DateTime::createFromFormat('!m', $raw);
+	return $dateObj->format('F');
+}
 
 
 
@@ -368,30 +345,30 @@ class inventory extends MY_Model
 		return array_key_exists('date_str', self::$bulk);
 	}
 
-	
+
 	//Function that gets pinged by a GSheet WebApp, and given two urls
 	//url_a will point to a source of some batches of data to import. We send a GET request to that link and parse the JSON there
 	//url_b will be listening for a POST request with relavant results after we complete the import
 	function autoUploadListener($url_a,$url_b){
 		//Get the batch at $url_a
 		$res = file_get_contents(base64_decode($url_a));
-                $temp_json = json_decode($res,TRUE); 
+                $temp_json = json_decode($res,TRUE);
 		$batch_data = json_decode($temp_json['batch_data']);
 		$batch_name = $temp_json['batch_name']; //keep track of this for the final ping to $url_b, so we can match errors appropriately
 		self::autoUpload($batch_data, $batch_name, base64_decode($url_b));
-		
+
 	}
-	
+
 
 	//Handles taking the array that was sent from GSheets & actually calling self::import, then returns alerts to url_b so they can be addressed
 	//Can't just return results to original API call because will timeout
 	function autoUpload($arr, $batch_name, $res_ping_url){
-		
+
 		//Actually call import on the rows
 		for($i = 0; $i < count($arr);$i++){
                 	self::import($arr[$i], $i+1);
                 }
-		
+
 		$res_ping_url = $res_ping_url."?batch_name=".urlencode($batch_name); //send this info so GSheet webapp can match errors to file
 		$data = json_encode(self::$bulk['alerts']); //send any alert rows with errors
 
@@ -405,7 +382,7 @@ class inventory extends MY_Model
 
 	}
 
-	
+
 	//This is called from the inventory page or Items page
 	//Or through autoupload Gsheets integration
 	//An associative array of fields, and the row#
@@ -414,10 +391,9 @@ class inventory extends MY_Model
 		//set_time_limit(5);
 
 		log::info('inventory::import');
-		
+
 		if((self::isTrusted()) AND ($row > 1)){
 			log::info('inventory::import isTrusted');
-      			//echo "TRUSTED";
 			//flush();
 			//barebones code to handle periodically adding new ndcs or updating prices
 			//the 'trusted_source' tag only gets used by OS or AK, with well-formatted data
@@ -469,10 +445,6 @@ class inventory extends MY_Model
 			flush();
 		}
 
-		//if($row > 300){
-		//	return self::$bulk['alerts'][] = array_merge($data, ['beyond row limit. just reupload the error csv']);
-		//}
-		//$sum =& self::$bulk['sum'];
 		$filename = "";
 		if(array_key_exists('orig_filename', self::$bulk['quasi_cache'])){
 			$filename = self::$bulk['quasi_cache']['orig_filename'];
@@ -480,14 +452,8 @@ class inventory extends MY_Model
 			$filename = data::post('orig_filename');
 			self::$bulk['quasi_cache']['orig_filename'] = $filename;
 		}
-		//$filename = data::post('orig_filename'); //gets the filename
 
-    		//if ( ! $row % 100)
-		//Unlike bulk() don't assume a certain field order.  Look for the correct names.
-		//TODO if all required fields are not present we should throw an error
 		if ($row == 1) {//Column headings
-			//print_r("HERE");
-			//print_r(implode("::",$data));
 			if(strpos($data[0],'Donations Report') !== false){
 				self::$bulk['pharmericaMonth'] = '_'; //a placeholder until we can put a date
 				return self::$bulk['alerts'][] = $data; //just copy taht row into error csv so that we can reupload
@@ -495,7 +461,7 @@ class inventory extends MY_Model
 				self::setFields($data);
 				return self::$bulk['alerts'][] = array_merge($data, ['error']);
 			}
-	  	}
+	  }
 
 	  	if(self::isPharmerica() AND ($row <= 6)){ //if it's pharmerica, and one of the first 6 rows (boilerplate stuff)
 	  		if($row == 2){
@@ -530,7 +496,7 @@ class inventory extends MY_Model
 		$brand_generic = '';
 		$mfg = '';
 		$url = '';
-		$colorado_exact_ndc = '';	
+		$colorado_exact_ndc = '';
 
 	  	//this will be filled either by a column (in V2 data) or by filename (Coleman & Polaris).
 	  	//it will not be used for Pharmerica
@@ -564,8 +530,8 @@ class inventory extends MY_Model
 
 			$archived = array_key_exists('verified', self::$bulk) ?  $data[self::$bulk['verified']] : "";
 		}
-	
-		//Pull some data that may only be relavant if we need to add the drug	
+
+		//Pull some data that may only be relavant if we need to add the drug
 		$description = array_key_exists('description', self::$bulk) ? $data[self::$bulk['description']] : "";
                 $price_date = array_key_exists('price_date', self::$bulk) ? $data[self::$bulk['price_date']] : "";
                 $goodrx = array_key_exists('goodrx', self::$bulk) ? $data[self::$bulk['goodrx']] : "";
@@ -579,7 +545,7 @@ class inventory extends MY_Model
 		$colorado_exact_ndc = array_key_exists('colorado_exact_ndc', self::$bulk) ? $data[self::$bulk['colorado_exact_ndc']] : "";
 
 
-		
+
 		$ndc = '';
 		//Extract these 3 out here so we do it for non-V2 csv's as well
 		if(array_key_exists('ndc', self::$bulk)){
@@ -695,7 +661,7 @@ class inventory extends MY_Model
 		$looked_up_by_name = false;
 		//Look up the uploaded NDC in our database.
 		$items = [];
-		
+
 		if(strlen($colorado_exact_ndc) > 0){//For Colorado, need to look up only by NDC, if not found it may be a drug to add, but only if it has full set of new rows
 			//search using colorado ndc
 			$items = item::search(['upc' => $colorado_exact_ndc]); //switched to use find so its as broad a search as allowed in the UI searchbar
@@ -705,7 +671,7 @@ class inventory extends MY_Model
 				$items = item::search(['upc' => $ndc]);
 			}
 
-			if(count($items) == 0){ 
+			if(count($items) == 0){
 				$query = "SELECT item.*, item.id as item_id, item.name as item_name, item.description as item_description
                                 	        FROM item
                                 	        USE INDEX (name_fulltext)
@@ -775,7 +741,7 @@ class inventory extends MY_Model
 		{
 			//For colorado exact ndc's, if we've got multiple matches, do a name match
 			$name_trim = explode(" ",$name)[0];
-			
+
 			$results = [];
 			$name_match = false;
 			foreach($items as $item) {
@@ -783,7 +749,7 @@ class inventory extends MY_Model
 					$items = array();
 					$items[] = $item;
 					$name_match = true;
-				} 
+				}
 				$results[] = $item->upc;
 			}
 			if(!$name_match) return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
@@ -792,7 +758,7 @@ class inventory extends MY_Model
 		//Look up the uploaded donation/shipment in our DB
 		//$donations = donation::search(['date_verified' => $date_verified]);
 		$donations = [];
-		
+
 		if(!self::isPharmerica()){ //If not Pharmerica, then use tracking number
 			if(array_key_exists('donation', self::$bulk['quasi_cache']) AND (self::$bulk['quasi_cache']['donation'][0]->tracking_number == $tracking_num)){
 				$donations = self::$bulk['quasi_cache']['donation'];
