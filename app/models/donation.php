@@ -106,7 +106,7 @@ class donation extends MY_Model
 	//Given a fifteen-digit format, return info for a given donation if exists
 	function pullTrackingInfo($tracking_num)
 	{
-			
+
 			preg_match('/([0-9]{15})/',$tracking_num,$m);
 			if(count($m) == 0){
 				echo "Error: No tracking number provided";
@@ -333,7 +333,7 @@ class donation extends MY_Model
 		//depending on time of day, check different date ranges
 		//tracking is triggered around the start of every hour
 		$curr_hour = intval(gmdate('H')) - 8; //server runs on GMT
-		
+
 		$cutoff_start = "";
 		$cutoff_end = "";
 
@@ -359,7 +359,7 @@ class donation extends MY_Model
 		log::info("Tracking donations 2");
 
 		$donations = $this->db->query($query);
-		
+
 		log::info("Tracking donations 3 ".$this->db->last_query());
 
 		//end of OS modifications
@@ -416,7 +416,7 @@ class donation extends MY_Model
 				$donation_items = $this->db->query($query)->result();
 				if ($donation_items[0]->count)
 				{
-					org::email($donation->donor_id, 'email_received_items', $email, file::path('manifest', donation::reference($donation).'_manifest.pdf'));
+					org::email($donation->donor_id, 'email_received_items', $email); //removed attachment at George's request on 2019-05-13. 4th argument: file::path('manifest', donation::reference($donation).'_manifest.pdf')
 				}
 				else
 				{
