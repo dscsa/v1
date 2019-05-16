@@ -282,11 +282,11 @@ function index()
 			{
 				case 'Import CSVs':
 					$partial = item::csv('inventory', 'import');
-					
+
 					$success = '';
 					$error_arr = [];
 					$num_errors = 0;
-					
+
 					if ((count(inventory::$bulk['alerts']) > 6) || ((count(inventory::$bulk['alerts']) > 1) && (strlen(inventory::$bulk['pharmericaMonth']) == 0)))
 					{
 						$success .= 'Following unique errors:';
@@ -308,9 +308,9 @@ function index()
 					$v['message'] = html::info($success, '', ['style' => 'text-align:left']);
 					break;
 				case 'Get Last Batch of Errors':
-			               ob_clean();
-		                       force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
-				       break;	
+			         ob_clean();
+		           force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
+				       break;
 				case 'Update NDCs':     item::csv('medicine', 'ndc', "\t"); break;
 				case 'Update Prices':   item::csv('medicine', 'price'); break;
 				case 'Update Images':   item::url('medicine', 'image'); break;
