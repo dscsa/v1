@@ -651,11 +651,11 @@ class inventory extends MY_Model
 						self::$bulk['quasi_cache']['donation'] = $donations;
 						return $donations;
 	     		} else {
-						self::$bulk['alerts'][] = array_merge($data, ["NO POLARIS DONATIONS SHIPPED ON THIS DATE"]);
+						self::$bulk['alerts'][] = array_merge($data, ["No Polaris donation shipped between the day before and day after this date"]);
 						return;
 					}
 			} else {
-	        self::$bulk['alerts'][] = array_merge($data, ["DATE OBJECT NOT FORMATTED CORRECTLY YYYY-MM-DD"]);
+	        self::$bulk['alerts'][] = array_merge($data, ["DATE OBJECT NOT FORMATTED CORRECTLY, must be YYYY-MM-DD"]);
 					return;
 			}
 		}
@@ -681,14 +681,14 @@ class inventory extends MY_Model
 
 		//Actually call import on the rows
 		for($i = 0; $i < count($arr);$i++){
-                	self::import($arr[$i], $i+1);
-                }
+    	self::import($arr[$i], $i+1);
+    }
 
 		$res_ping_url = $res_ping_url."?batch_name=".urlencode($batch_name); //send this info so GSheet webapp can match errors to file
 		$data = json_encode(self::$bulk['alerts']); //send any alert rows with errors
 
-                $ch = curl_init($res_ping_url);
-                curl_setopt($ch, CURLOPT_POST, 1);
+    $ch = curl_init($res_ping_url);
+    curl_setopt($ch, CURLOPT_POST, 1);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 		curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -700,7 +700,7 @@ class inventory extends MY_Model
 	//to run without saving items, so that it can be handled by controller w/o searching for
 	//donation. Especially useful for dealing with duplicate tracking numbers issue
 	function process($data,$row){
-		self::$bulk['handle_save'] = False;
+		if($row == 1) self::$bulk['handle_save'] = False;
 		self::import($data,$row);
 	}
 
@@ -721,7 +721,7 @@ class inventory extends MY_Model
 
 
 		if(($row % 10 == 0)){ //incrementally send this to the browser so it doesn't time out, only matters on manual calls
-			echo str_pad("Processing row: ".$row."<br>",1024); //I think something might've changed on the browser settings, because these stopped displaying, unless padded
+			echo str_pad("Processing row: ".$row."<br>",1024); //think something might've changed on the browser settings, because these stopped displaying, unless padded
 			ob_flush();
 		}
 		//-----------End of boilerplate-----------------------------
@@ -754,7 +754,7 @@ class inventory extends MY_Model
 		$exact_ndc = array_key_exists('exact_ndc', self::$bulk) ? $data[self::$bulk['exact_ndc']] : "";
 
 		$ndc = strlen($ndc) > 0 ? str_pad($ndc, 9, '0', STR_PAD_LEFT) : "";
-		$exact_ndc = strlen($exact_ndc) > 0 ? str_pad($exact_ndc, 9, '0', STR_PAD_LEFT) : ""; //need to pad leading zeroes
+		$exact_ndc = strlen($exact_ndc) > 0 ? str_pad($exact_ndc, 9, '0', STR_PAD_LEFT) : ""; //need to pad leading zeroes bc of spreadsheet issues
 
 
 		//v2 shipment._id is in <10 digit recipient phone>.JSON Date.<10 digit donor phone>
@@ -907,7 +907,8 @@ class inventory extends MY_Model
 				}
 			}
 		}
-		//------end of donation -------------------------------
+		//------end of donation lookup / creation-------------------------------
+
 		//-------Process item
 		self::saveItem($donations,$items,$qty,$archived,$exp,$row,$ndc, $handleSave);
 	}
