@@ -11,7 +11,11 @@
 
 		->button("shipping/manifest/$donation_id?iframe=true", 'Print', 'floatright avia-color-theme-color-subtle', ['rel' => 'lightbox', 'style' => 'margin-left:2px'])
 
-		->add(form::upload('upload', 'Import', 'floatright avia-color-theme-color-subtle', ['hidden' => true, 'onchange' => 'this.form.submit()']))
+                ->add(form::submit("Get Errors", 'floatright avia-color-theme-color-subtle', ['hidden' => true, 'onchange' => 'this.form.submit()']))
+
+
+		->add(form::upload('upload','Import', 'floatright avia-color-theme-color-subtle', ['hidden' => true, 'onchange' => 'this.form.submit()']))
+
 
 		->add(form::input('upc', '', "tall inline-block", ['style' => 'width:65%;', 'tabindex' => 3, valid::submit('Save Quantity') ? 'autofocus' : false => true, 'placeholder' => 'Add or filter items by name or ndc', 'id' => 'adddonation']))
 

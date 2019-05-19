@@ -33,13 +33,23 @@
 
 		->end()
 
+		
 		->h3("Update Database")
-
+		
 		->add(form::open().'Do updates in order unless you know what you are doing')
+
+		->h4("Bulk Import Data")
 
 		->ul('main_color')
 
-			->li(form::upload('transactions', 'Import v2 Transactions', 'avia-color-theme-color', ['style' => 'width:150px', 'hidden' => true, 'onchange' => 'this.form.submit()']))
+                        ->li(form::upload('transactions', 'Import CSVs', 'avia-color-theme-color', ['style' => 'width:150px','hidden' => true, 'onchange' => 'this.form.submit()']))
+			->li(form::submit("Get Last Batch of Errors", 'avia-color-theme-color-subtle', ['style' => 'width:200px','hidden' => true, 'onchange' => 'this.form.submit()']))
+
+		->end()
+			
+		->h4("Other Updates")	
+	
+		->ul('main_color')
 
 			->li(form::upload('product', 'Update NDCs', 'avia-color-theme-color', ['style' => 'width:150px', 'hidden' => true, 'onchange' => 'this.form.submit()']).'Requires '.html::link('http://www.fda.gov/downloads/Drugs/DevelopmentApprovalProcess/UCM070838.zip', "product.txt"))
 

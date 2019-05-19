@@ -20,7 +20,7 @@ class Account_controller extends MY_Controller
 	function index()
 	{
 		user::login($org_id);
-
+		
 		if (valid::submit('update') AND valid::form())
 		{
 			if ($path = data::post('upload'))

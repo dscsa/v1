@@ -20,7 +20,6 @@ class Donations_controller extends MY_Controller
 	function index()
 	{
 		user::login($org_id);
-
 		$query = result::fields
 		(
 			['Partner', 'partner', 'partner()'],
@@ -114,6 +113,10 @@ class Donations_controller extends MY_Controller
 
 		$items = data::post('items');
 
+		$this->load->helper('download');
+		$error_filename = "import_errors";
+		$filepath = $_SERVER["DOCUMENT_ROOT"].'/'.$error_filename.'.csv';
+
 		$v =
 		[
 			'none'			  => html::note('NO DONATION ITEMS MATCH YOUR CRITERIA'),
@@ -131,15 +134,36 @@ class Donations_controller extends MY_Controller
 		//POST's Upload Value will not be set unless form_validation is run.
 		if (valid::and_submit('import'))
 		{
-			item::csv('inventory', 'bulk');
 
-			if (inventory::$bulk['alerts'])
+			item::csv('inventory', 'process');
+
+			$success = '';
+			$error_arr = [];
+			$num_errors = 0;
+
+			if ((count(inventory::$bulk['alerts']) > 6) || ((count(inventory::$bulk['alerts']) > 1) && (strlen(inventory::$bulk['pharmericaMonth']) == 0)))
 			{
-				$v['message'] = html::alert('CSV Errors:<br>'.implode('<br>', inventory::$bulk['alerts']), '', ['style' => 'text-align:left']);
+
+				$success .= 'Following unique errors:';
+				$output = fopen($filepath, 'w');
+
+				for($i = 0; $i < count(inventory::$bulk['alerts']); $i++){
+					$error_text = array_values(array_slice(inventory::$bulk['alerts'][$i], -1))[0];
+					if(strpos($error_text,"Donation had to be created") === false){
+						if(strpos(strtolower($error_text), "beyond row limit") === false){
+							$num_errors += 1;
+						}
+						fputcsv($output, inventory::$bulk['alerts'][$i]);
+					}
+					if(!in_array($error_text, $error_arr) AND strlen($error_text) > 0 AND $error_text !== 'error'){
+						$success .= '<br>'.$error_text;
+						$error_arr[] = $error_text;
+					}
+				}
+				fclose($output);
 			}
-			else
-			{
-				$success = '';
+
+			if(count(inventory::$bulk['upload']) > 0){ //if successful at processing, then actually add them here
 
 				$qty_key = data::post('donation_type') == 'Donation' ? 'donor_qty' : 'donee_qty';
 
@@ -149,8 +173,8 @@ class Donations_controller extends MY_Controller
 					$data = inventory::$bulk['upload'][$row];
 
 					inventory::create([
-						'donation_id'	=> $data['donation_id'] ?: $donation_id,
-						'item_id'     => $data['id'],
+						'donation_id'	=> $donation_id,
+						'item_id'     => $data['item_id'],
 						$qty_key			=> $data['dispensed'],
 						'org_id'      => $org_id,
 						'price' 	 		=> $data['price'],
@@ -167,12 +191,18 @@ class Donations_controller extends MY_Controller
 						//1 and show rather than being at -1 which would still be hidden
 						inventory::increment(['org_id' => $org_id, 'item_id' => $data['id']], $data['dispensed']);
 					}
-
 					$success = "Row ".($row+2).": $data[ndc] was added with quantity $data[dispensed]<br>".$success;
 				}
-
-				$v['message'] = html::info('Donation items imported successfully<br><br>'.$success, '', ['style' => 'text-align:left']);
 			}
+
+			$v['message'] = html::info('Donation items imported successfully<br><br>'.$success, '', ['style' => 'text-align:left']);
+
+		}
+
+		if(valid::submit('Get Errors')){
+				ob_clean();
+				force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
+
 		}
 
 		//Show all, i.e. don't filter results based on this new ndc
