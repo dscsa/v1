@@ -109,7 +109,11 @@ class inventory extends MY_Model
 	 'quasi_cache' => [],
 	];
 
+<<<<<<< HEAD
 	//test comment as setting up new branch workflow
+=======
+
+>>>>>>> fa33c09fdc60a4f204fc7b00750006d8347820b9
 	//Should be depracated
 	function bulk($data)
 	{
