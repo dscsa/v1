@@ -110,6 +110,8 @@ class inventory extends MY_Model
 	];
 
 	//test comment as setting up new branch workflow
+	//TEST - only show this in test branch until we pull request
+	//TEST 2 - only on test branch again, after its already been pushed
 	//Should be depracated
 	function bulk($data)
 	{
