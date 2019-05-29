@@ -46,7 +46,7 @@ $lang['email_approval'] = array
 $lang['email_received_items'] = array
 (
 	'Donation Received',
-	"{0}'s ".html::link("login?email={email}&to=donations/{1}", 'donation')." with tracking number {2} to {3} was <strong>received.</strong> Your donation record is attached and is also available ".html::link('login?email={email}&to=record/donated', 'online.')." Our goal is for donating to be easier than destroying - if you have any questions or suggestions, simply reply to this email or call us at ".PHONE.". Thanks again!"
+	"{0}'s ".html::link("login?email={email}&to=donations/{1}", 'donation')." with tracking number {2} to {3} was <strong>received.</strong> Our goal is for donating to be easier than destroying - if you have any questions or suggestions, simply reply to this email or call us at ".PHONE.". Thanks again!"
 );
 
 $lang['email_received_no_items'] = array

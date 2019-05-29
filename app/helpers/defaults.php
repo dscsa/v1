@@ -209,7 +209,8 @@ class defaults
 				101 => 'Personal Care Home',
 				102 => 'Assisted Living Community',
 				103 => 'Pharmacy',
-				104 => 'Hospital'
+				104 => 'Hospital',
+				105 => 'Practitioner'
 			],
 			'Washington' =>
 			[
