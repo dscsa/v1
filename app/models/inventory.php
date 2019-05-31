@@ -425,6 +425,10 @@ class inventory extends MY_Model
 		if(strlen($exact_ndc) > 0){//For states where exact ndc is required, need to look up only by NDC, if not found it may be a drug to add, but only if it has full set of new rows
 			//search using exact ndc
 			$items = item::search(['upc' => $exact_ndc]); //switched to use find so its as broad a search as allowed in the UI searchbar
+			if(count($items) == 0){
+				$exact_ndc = substr($exact_ndc, 0, -2); //if no match, try removing last two digits. if multiple matches, this will go into the name match below (~450)
+				$items = item::search(['upc' => $exact_ndc]);
+			}
 		} else {
 			if(strlen($ndc) > 0){ //if not required, use the regular ndc field, which for coleman is going to match, for everyone else, it may or may not match
 				$items = item::search(['upc' => $ndc]);
@@ -452,10 +456,9 @@ class inventory extends MY_Model
 		{
 			//For colorado exact ndc's, if we've got multiple matches, do a name match
 			$name_trim = explode(" ",$name)[0];
-
 			$name_match = false;
 			foreach($items as $item) {
-				if((strlen($exact_ndc) > 0) AND (strpos($item->name,$name_trim) !== false)){
+				if((strlen($exact_ndc) > 0) AND ((strpos($item->name,$name_trim) !== false) OR (strpos($item->description,$name_trim) !== false))){ //check if we match the generic or brand name
 					$items = array();
 					$items[] = $item; //so items will be back to one length
 					$name_match = true;
