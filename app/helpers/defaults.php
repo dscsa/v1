@@ -152,24 +152,24 @@ class defaults
 				30 => 'Prescription Drug Outlet',
 				31 => 'Nursing Home',
 				32 => 'Assisted Living Residence',
-				33 => 'Licensed practitioner',
-				34 => 'Community mental health center'
+				33 => 'Licensed Practitioner',
+				34 => 'Community Mental Health Center'
 			],
 
 			'Oregon' =>
 			[
-				40 => 'Skilled nursing facility',
-				41 => 'Intermediate care facility',
+				40 => 'Skilled Nursing Facility',
+				41 => 'Intermediate Care Facility',
 				42 => 'Pharmacy',
-				43 => 'Medical clinic',
-				44 => "Practitioner",
-				45 => "Residential care or assisted living facility",
-				49 => "Other licensed facility"
+				43 => 'Medical Clinic',
+				44 => "Licensed Practitioner",
+				45 => "Residential Care or Assisted Living Facility",
+				49 => "Other Licensed Facility"
 			],
 			'New Hampshire' =>
 			[
 				50 => 'Pharmacy',
-				51 => 'Licensed practitioner',
+				51 => 'Licensed Practitioner',
 				52 => 'Hospice',
 				53 => 'Outpatient clinic',
 				54 => 'Nursing home',
@@ -201,7 +201,8 @@ class defaults
 				90 => 'Long-Term Care Nursing Facility',
 				91 => "Assisted Living Residence",
 				92 => 'Pharmacy',
-				93 => 'Wholesaler'
+				93 => 'Wholesaler',
+				94 => 'Personal Care Home'
 			],
 			'Georgia' =>
 			[
@@ -210,7 +211,7 @@ class defaults
 				102 => 'Assisted Living Community',
 				103 => 'Pharmacy',
 				104 => 'Hospital',
-				105 => 'Practitioner'
+				105 => 'Licensed Practitioner'
 			],
 			'Washington' =>
 			[
