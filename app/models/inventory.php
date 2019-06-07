@@ -312,6 +312,9 @@ class inventory extends MY_Model
       if($value == 'mfg')
               self::$bulk['mfg'] = $index;
 
+			if($value == 'labeler')
+				      self::$bulk['mfg'] = $index;
+
       if($value == 'url')
               self::$bulk['url'] = $index;
 
@@ -422,10 +425,13 @@ class inventory extends MY_Model
 	function lookUpItem($exact_ndc,$ndc,$name){
 		$items = [];
 		$looked_up_by_name = false;
+		$quasi_exact_lookup = false;
+
 		if(strlen($exact_ndc) > 0){//For states where exact ndc is required, need to look up only by NDC, if not found it may be a drug to add, but only if it has full set of new rows
 			//search using exact ndc
 			$items = item::search(['upc' => $exact_ndc]); //switched to use find so its as broad a search as allowed in the UI searchbar
 			if(count($items) == 0){
+				$quasi_exact_lookup = true;
 				$exact_ndc = substr($exact_ndc, 0, -2); //if no match, try removing last two digits. if multiple matches, this will go into the name match below (~450)
 				$items = item::search(['upc' => $exact_ndc]);
 			}
@@ -455,7 +461,7 @@ class inventory extends MY_Model
 		if ((count($items) > 1) AND (!$looked_up_by_name))
 		{
 			//For colorado exact ndc's, if we've got multiple matches, do a name match
-			$name_trim = explode(" ",$name)[0];
+			$name_trim = trim($name);
 			$name_match = false;
 			foreach($items as $item) {
 				if((strlen($exact_ndc) > 0) AND ((strpos($item->name,$name_trim) !== false) OR (strpos($item->description,$name_trim) !== false))){ //check if we match the generic or brand name
@@ -465,7 +471,8 @@ class inventory extends MY_Model
 				}
 			}
 		}
-
+		
+		if($quasi_exact_lookup AND (count($items) > 1)) return array(); //otherwise we might be unable to add a drug
 		return $items;
 
 	}
@@ -811,7 +818,8 @@ class inventory extends MY_Model
 			foreach($items as $item) {
 				$results[] = $item->upc;
 			}
-			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: $ndc had multiple results: ".join(", ", $results)]);
+
+			return self::$bulk['alerts'][] = array_merge($data, ["Row $row: ".((strlen($exact_ndc) > 0) ? $exact_ndc : $ndc)." had multiple results: ".join(", ", $results)]);
 		}
 
 		//If the NDC does not yet exist, try to create a new drug with it.
