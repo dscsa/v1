@@ -511,6 +511,66 @@ class Donations_controller extends MY_Controller
 		to::info(['Success!', 'Items added to the donation'], 'to_default', "donations/$donation_id");
 	}
 
+
+	function individual_donation(){
+
+			echo "RECEIVING POST";
+			$raw_data = (json_decode(urldecode(file_get_contents('php://input'))));
+
+			$criteria_list = $raw_data->IAgreeThatTheDonatedMedicineMeetsALLOfTheseCriteria;
+			$criteria_list_filled = $raw_data->IAgreeThatTheDonatedMedicineMeetsALLOfTheseCriteria_Value;
+			//Perform check here?
+
+			$med_list = $raw_data->ListOfDonatedMedicine; //an array of jsons
+
+			$donor_name = $raw_data->MyName->FirstAndLast;
+			$donor_email = $raw_data->MyEmail;
+			$donor_addr_obj = $raw_data->MyAddress;
+			$donor_street = $donor_addr_obj->StreetAddress;
+			$donor_city = $donor_addr_obj->City;
+			$donor_state = $donor_addr_obj->State;
+			$donor_zipcode = $donor_addr_obj->PostalCode;
+
+			print_r([$donor_name,$donor_street,$donor_city,$donor_state,$donor_zipcode]);
+
+			$dummy_donor_id = 818; //this is just for utc time lookup for pickup, but there'll be no pickups so doesnt matter
+			$donor_instructions = '';
+
+			$donee = org::find(1); //TODO: donor id of the actual recipient for individual donations
+
+			$donation = (object) array
+			(
+				'donation_id'  => 'individual',
+				'donor_id' 		=> $dummy_donor_id, //need this only for utc time lookup
+				'donor_org' 	=> $donor_name,
+				'donor_street' => $donor_street,
+				'donor_city' 	=> $donor_city,
+				'donor_state' 	=> $donor_state,
+				'donor_zip' 	=> $donor_zipcode,
+				'donor_instructions' => $donor_instructions,
+
+				'donee_instructions' => $donee->instructions,
+				'donee_id' 		=> $donee->org_id,
+				'donee_org' 	=> $donee->org_name,
+				'donee_street' => $donee->street,
+				'donee_city' 	=> $donee->city,
+				'donee_state'	=> $donee->state,
+				'donee_zip' 	=> $donee->zipcode
+			);
+
+			$file = donation::label($donation); //filepath to the label
+
+			$email = text::get('email_individual_donation');
+			print_r($email);
+			$view = $this->load->view('common/email', ['body' => $email[1], 'user' => $donor_name], true);
+
+			admin::email($email[0],$view, 'omar@sirum.org',array('label/'.$file));
+
+			echo "ALL OF POST DONE";
+			flush();
+		}
+
+
 /*
 | -------------------------------------------------------------------------
 | Helper Functions

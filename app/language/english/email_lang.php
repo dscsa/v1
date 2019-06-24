@@ -1,5 +1,6 @@
 <?php
 
+
 //Generated Emails
 $lang['email_password'] = array
 (
@@ -71,4 +72,16 @@ $lang['email_missed_pickup'] = array
 (
 	"Pickup Missed",
 	html::link("donations/{1}", "Donation {1}")." with tracking number {2} from {0} was not picked up. Attempting to reschedule..."
+);
+
+$lang['email_individual_donation'] = array
+(
+	"Your SIRUM Donation Label",
+	"Thank you for donating!
+	<br>
+	<br>
+	Attached is a label you can print out and attach to your box of donated medications.
+	<br>
+	<br>
+	- SIRUM"
 );

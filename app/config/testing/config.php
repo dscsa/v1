@@ -297,10 +297,29 @@ $config['global_xss_filtering'] = TRUE;
 | 'csrf_cookie_name' = The cookie name
 | 'csrf_expire' = The number in seconds the token should expire.
 */
-$config['csrf_protection'] = TRUE;
+$config['csrf_protection'] = TRUE; //TODO: this should be true, but need to get csrf_exclude_uris to work
+/*
+//Potential solution if csrf doesnt work for cognito directly
+if (isset($_SERVER["REQUEST_URI"]))
+{
+    if(stripos($_SERVER["REQUEST_URI"],'/donations/individual_donation') === FALSE)
+    {
+        $config['csrf_protection'] = TRUE;
+    }
+    else
+    {
+        $config['csrf_protection'] = FALSE;
+    }
+}
+else
+{
+    $config['csrf_protection'] = TRUE;
+}
+*/
 $config['csrf_token_name'] = 'sirum_csrf_token';
 $config['csrf_cookie_name'] = 'sirum_csrf_cookie';
 $config['csrf_expire'] = 7200;
+
 
 /*
 |--------------------------------------------------------------------------
