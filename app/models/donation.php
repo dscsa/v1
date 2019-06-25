@@ -190,13 +190,27 @@ class donation extends MY_Model
 		bkg::donation('manifest', $donation_id);
 	}
 
+
+	function individual_manifest($list){
+		$file = 'last_manifest.pdf';//TODO: make this a unqiue val based on the list or something -- OR USE NAME
+
+		if (true)//( ! file::exists('label', $file)) //TODO: uncomment
+		{
+			$label = pdf::individual_manifest(file::path('label', $file), $list);
+		}
+
+		return $file;
+	}
+
+
 	// Create the label if necessary.  Return the file path.
 	// During donation::create task is run in background
-	function label($donation)
+	function label($donation, $label_only = FALSE)
 	{
+
 		$file = self::reference($donation).'_label.pdf';
 
-		if ( ! file::exists('label', $file))
+		if (true)//( ! file::exists('label', $file)) //TODO: uncomment
 		{
 			$label = fedex::label(file::path('label', $file), $donation);
 
@@ -211,7 +225,8 @@ class donation extends MY_Model
 				self::update($label['success'], $donation->donation_id);
 			}
 
-			$label = pdf::label(file::path('label', $file), $donation, $label['success']['tracking_number']);
+
+			$label = $label_only ? pdf::individual_label(file::path('label', $file), $donation) : pdf::label(file::path('label', $file), $donation, $label['success']['tracking_number']);
 
 			if ($label['error'])
 			{

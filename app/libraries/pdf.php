@@ -97,7 +97,7 @@ class Pdf
 
 /**
 | Merge
-| 
+|
 | Takes a 2D array of batches of filenames. Each batch (one of the 1D arrays) will get collated
 | and between each batch it adds some blank pages so it can all be printed out together
 | while making it easy to separate.
@@ -109,7 +109,7 @@ class Pdf
 		$pdf = new FPDI('P', 'mm', 'Letter');
                 $filename = "merged_".date("m_d_Y_h_i").".pdf";
 		$filepath = file::path('label', $filename);
-		
+
 		foreach($full_arr as $row => $batch){
 			//ADD 6 BLANK PAGES so that people in office can separate batches
 			$pdf->AddPage('P');
@@ -132,6 +132,185 @@ class Pdf
 	}
 
 
+
+	function individual_manifest($file,$arr_json_items){
+		echo "making manifest";
+		flush();
+
+		require_once('../app/libraries/pdf/fpdi.php');
+
+		$pdf = new FPDI('P', 'mm', 'Letter');
+
+		$pdf->SetAutoPageBreak(false);
+
+		$pdf->AddPage();
+
+		//ignore pagecount for now since we know each types pagecount
+		$template_name = "Label Only.pdf";
+
+		$pagecount = $pdf->setSourceFile(file::path('template', $template_name));
+
+		$tmpl = $pdf->importPage(1);
+
+		$pdf->useTemplate($tmpl, 0, 0);
+
+		$pdf->SetLeftMargin(12);
+
+		$pdf->SetY(28);
+
+		$pdf->SetFont('Helvetica', '', 10);
+
+		$manifest = $arr_json_items;
+		$bold = false;
+
+		//Add header
+		$pdf->SetFont('', 'B', 20);
+		$pdf->SetTextColor(68, 200, 245);
+		$pdf->Write(5, 'Manifest of Donated Medicines');
+		$pdf->SetFont('', '', 11);
+		$pdf->SetTextColor(64);
+
+		$pdf->SetY(40);
+
+		foreach ($manifest as $i => $medicine){
+
+			$y_pos = $pdf->GetY();
+
+			if($y_pos >= 200){//then we're approaching bottom, so extend manifest to new page
+
+				$pdf->Ln(10);//add new lines between
+
+				$pdf->SetFont('', 'B', 20);
+				$pdf->Write(5, 'Continued on next page');
+				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+
+				$pdf->AddPage();
+				$pdf->useTemplate($tmpl, 0, 0);
+				$pdf->SetLeftMargin(12);
+				$pdf->SetY(28);
+
+				//Add header
+				$pdf->SetFont('', 'B', 20);
+				$pdf->SetTextColor(68, 200, 245);
+				$pdf->Write(5, 'Manifest Continued');
+				$pdf->SetFont('', '', 11);
+				$pdf->SetTextColor(64);
+				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+
+				$pdf->SetY(40);
+
+			}
+
+
+
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, 'Drug Name: ');
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, mb_convert_encoding($medicine->DrugNameStrength, 'windows-1252'));
+			$pdf->Ln(5);//add new lines between
+
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, 'National Drug Code: ');
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, mb_convert_encoding($medicine->NationalDrugCode, 'windows-1252'));
+			$pdf->Ln(5);//add new lines between
+
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, 'Quantity: ');
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, mb_convert_encoding($medicine->Quantity, 'windows-1252'));
+			$pdf->Ln(5);//add new lines between
+
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, 'Expiration Date: ');
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, mb_convert_encoding($medicine->ExpirationDate, 'windows-1252'));
+
+			$pdf->Ln(15);//add new lines between
+		}
+
+		$pdf->Output($file, "F");
+
+	}
+
+	function individual_label($file,$donation){
+
+		require_once('../app/libraries/pdf/fpdi.php');
+
+		$pdf = new FPDI('P', 'mm', 'Letter');
+
+		$pdf->SetAutoPageBreak(false);
+
+		$pdf->AddPage();
+
+		//ignore pagecount for now since we know each types pagecount
+		$template_name = "Label Only.pdf";
+
+		$pagecount = $pdf->setSourceFile(file::path('template', $template_name));
+		$tmpl = $pdf->importPage(1);
+		$pdf->SetFont('Helvetica', '', 10);
+
+
+		$pdf->useTemplate($tmpl, 0, 0);
+		$pdf->SetLeftMargin(12);
+
+
+		//Make the thank you Letter
+		//Insert the dynamic donor and donee instructions
+		//We have to convert our mini-syntax into PDF formatting
+		$pdf->SetY(24);
+
+		//Either add donation instructions, or thanks message
+		$split = $donation->label_text;
+
+		$out  = '';
+		$bold = false;
+		$pdf->Ln(5);//add new lines between
+
+		foreach ($split as $i => $line)
+		{
+			$pdf->Ln(5);//add new lines between
+			if(strpos($line,"<donor_name>") !== FALSE) $line = str_replace("<donor_name>",$donation->donor_org, $line);
+			if(strpos($line,"<donation_date>") !== FALSE) $line = str_replace("<donation_date>",date("F j, Y"), $line);
+
+			//First line is the heading
+			if ($i == 0)
+			{
+				$pdf->SetFont('', 'B', 20);
+				$pdf->SetTextColor(68, 200, 245);
+				$pdf->Write(5, $line);
+				$pdf->SetFont('', '', 11);
+				$pdf->SetTextColor(64);
+				$pdf->Ln(5);
+
+				continue;
+			}
+
+			if ($line == '')
+			{
+				$pdf->Ln(5);
+				continue;
+			}
+
+			$pdf->Write(5, mb_convert_encoding($line, 'windows-1252'));
+		}
+
+
+		//Make the label page
+		$pdf->AddPage();
+		$pdf->useTemplate($tmpl, 0, 0);
+		$pdf->SetLeftMargin(12);
+		$pdf->SetY(28);
+
+		//Slightly different position for label vs donation coversheet
+		$pdf->Image("$file.png", 11, 105, -200);
+
+		unlink("$file.png");
+
+
+		$pdf->Output($file, "F");
+	}
+
 /**
 | -------------------------------------------------------------------------
 | Label
@@ -146,8 +325,10 @@ class Pdf
 */
 
 
-	function label($file, $donation, $tracking)
+	function label($file, $donation, $tracking, $label_only = FALSE)
 	{
+		echo "making label";
+		flush();
 		require_once('../app/libraries/pdf/fpdi.php');
 
 		$pdf = new FPDI('P', 'mm', 'Letter');
@@ -156,18 +337,25 @@ class Pdf
 
 		$pdf->AddPage();
 
-		$pdf->Image("$file.png", 11, 125, -200);
-
-		unlink("$file.png");
-
 		//ignore pagecount for now since we know each types pagecount
-		$pagecount = $pdf->setSourceFile(file::path('template', "Donation Coversheet.pdf"));
+		$template_name = $label_only ? "Label Only.pdf" : "Donation Coversheet.pdf";
+
+		$pagecount = $pdf->setSourceFile(file::path('template', $template_name));
 
 		$tmpl = $pdf->importPage(1);
 
 		$pdf->useTemplate($tmpl, 0, 0);
 
 		$pdf->SetLeftMargin(12);
+
+		//Slightly different position for label vs donation coversheet
+		if($label_only){
+			$pdf->Image("$file.png", 11, 105, -200);
+		} else{
+			$pdf->Image("$file.png", 11, 125, -200);
+		}
+
+		unlink("$file.png");
 
 		//Put in the static information right above the confidentiality agreement
 		$pdf->SetFont('Helvetica', '', 10);
@@ -182,15 +370,28 @@ class Pdf
 		//We have to convert our mini-syntax into PDF formatting
 		$pdf->SetY(24);
 
-		//Trim is in case no donee instruction, then we want the donor instruction to have its first line as the title ($i == 0 a few lines below).
-		$split = str_replace(["\n", "\n\n\n\n", "*\n", "\n[]"], ["\n\n", "\n\n\n", "*", "[]"], trim("$donation->donee_instructions\n$donation->donor_instructions"));
-		$split = preg_split('/\n|(\*|\[\])/', $split, -1, PREG_SPLIT_DELIM_CAPTURE);
+		//Either add donation instructions, or thanks message
+
+		$split = array();
+
+		if($label_only){
+			$split = $donation->label_text;
+		} else {			//Trim is in case no donee instruction, then we want the donor instruction to have its first line as the title ($i == 0 a few lines below).
+			$split = str_replace(["\n", "\n\n\n\n", "*\n", "\n[]"], ["\n\n", "\n\n\n", "*", "[]"], trim("$donation->donee_instructions\n$donation->donor_instructions"));
+			$split = preg_split('/\n|(\*|\[\])/', $split, -1, PREG_SPLIT_DELIM_CAPTURE);
+		}
 
 		$out  = '';
 		$bold = false;
 
 		foreach ($split as $i => $line)
 		{
+			if($label_only){
+				$pdf->Ln(5);//add new lines between
+				if(strpos($line,"<donor_name>") !== FALSE) $line = str_replace("<donor_name>",$donation->donor_org, $line);
+				if(strpos($line,"<donation_date>") !== FALSE) $line = str_replace("<donation_date>",date("F j, Y"), $line);
+			}
+
 			//First line is the heading
 			if ($i == 0)
 			{
@@ -240,22 +441,24 @@ class Pdf
 			$pdf->Write(5, mb_convert_encoding($line, 'windows-1252'));
 		}
 
-		//Template must be two pages.  The second page should be blank.
-		$pdf->AddPage();
+		if($label_only){
 
-		$pdf->useTemplate($pdf->importPage(2), 0, 0);
+		} else { //add the to/from mailing info
 
-		//We insert SIRUM's address in the top left
-		$pdf->SetXY(14, 33);
-		//Double quotes important.  FPDF won't recognize new line character \n with single quotes
-		$pdf->MultiCell(0, 5, preg_replace('/, /', "\n", ADDRESS, 1));
+			$pdf->AddPage();
+			$pdf->useTemplate($pdf->importPage(2), 0, 0);
+			//We insert SIRUM's address in the top left
+			$pdf->SetXY(14, 33);
+			//Double quotes important.  FPDF won't recognize new line character \n with single quotes
+			$pdf->MultiCell(0, 5, preg_replace('/, /', "\n", ADDRESS, 1));
+			//We insert donor's address in the midle of the page (for mailing in clear envelopes)
+			$pdf->SetFont('Helvetica', 'B', 14);
 
-		//We insert donor's address in the midle of the page (for mailing in clear envelopes)
-		$pdf->SetFont('Helvetica', 'B', 14);
+			$pdf->SetXY(70, 60);
 
-		$pdf->SetXY(70, 60);
+			$pdf->MultiCell(0, 6, "$donation->donor_org\nAttn: $donation->donor_user\n$donation->donor_street\n$donation->donor_city, $donation->donor_state $donation->donor_zip");
 
-		$pdf->MultiCell(0, 6, "$donation->donor_org\nAttn: $donation->donor_user\n$donation->donor_street\n$donation->donor_city, $donation->donor_state $donation->donor_zip");
+		}
 
 		$pdf->Output($file, "F");
 	}

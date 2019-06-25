@@ -519,7 +519,7 @@ class Donations_controller extends MY_Controller
 
 			$criteria_list = $raw_data->IAgreeThatTheDonatedMedicineMeetsALLOfTheseCriteria;
 			$criteria_list_filled = $raw_data->IAgreeThatTheDonatedMedicineMeetsALLOfTheseCriteria_Value;
-			//Perform check here?
+
 
 			$med_list = $raw_data->ListOfDonatedMedicine; //an array of jsons
 
@@ -531,12 +531,12 @@ class Donations_controller extends MY_Controller
 			$donor_state = $donor_addr_obj->State;
 			$donor_zipcode = $donor_addr_obj->PostalCode;
 
-			print_r([$donor_name,$donor_street,$donor_city,$donor_state,$donor_zipcode]);
-
 			$dummy_donor_id = 818; //this is just for utc time lookup for pickup, but there'll be no pickups so doesnt matter
 			$donor_instructions = '';
 
 			$donee = org::find(1); //TODO: donor id of the actual recipient for individual donations
+
+			$label_text = text::get('label_thank_you');
 
 			$donation = (object) array
 			(
@@ -555,16 +555,19 @@ class Donations_controller extends MY_Controller
 				'donee_street' => $donee->street,
 				'donee_city' 	=> $donee->city,
 				'donee_state'	=> $donee->state,
-				'donee_zip' 	=> $donee->zipcode
+				'donee_zip' 	=> $donee->zipcode,
+
+				'label_text' => $label_text,
 			);
 
-			$file = donation::label($donation); //filepath to the label
+			$label_and_thanks_file = donation::label($donation,TRUE); //filepath to the label
+			$manifest_file = donation::individual_manifest($med_list);
 
 			$email = text::get('email_individual_donation');
-			print_r($email);
+
 			$view = $this->load->view('common/email', ['body' => $email[1], 'user' => $donor_name], true);
 
-			admin::email($email[0],$view, 'omar@sirum.org',array('label/'.$file));
+			admin::email($email[0],$view, 'omar@sirum.org',array('label/'.$label_and_thanks_file, 'label/'.$manifest_file));
 
 			echo "ALL OF POST DONE";
 			flush();
