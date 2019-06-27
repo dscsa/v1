@@ -74,25 +74,19 @@ $lang['email_missed_pickup'] = array
 	html::link("donations/{1}", "Donation {1}")." with tracking number {2} from {0} was not picked up. Attempting to reschedule..."
 );
 
-$lang['email_individual_donation'] = array
+$lang['email_individual_donation_success'] = array
 (
 	"Your SIRUM Donation Label",
 	"Thank you! To complete your donation:<br><br>
 	1. Print the attached shipping label and donation manifest<br>
 	2. Place the manifest inside the box and tape the shipping label to the outside.<br>
-	3. Seal the box and <link>arrange a pickup<link> or drop it off at the nearest FedEx pickup location<br>
-	4. Keep this email and attachment for your records<br>"
+	3. Seal the box and ".html::link('https://www.fedex.com/PickupApp/login?locale=en_US&appTab=FDXE','arrange a pickup')." or drop it off at the nearest FedEx pickup location<br>
+	4. Keep this email and two attachments for your records<br>"
 );
 
-$lang['label_thank_you'] = array
+$lang['email_individual_donation_failure'] = array
 (
-  "Hello <donor_name>,",
-  "Please accept our thanks for your generous donation on <donation_date>. Your support will go a long way in furthering SIRUM’s ability to save lives by connecting unopened, unexpired medications with people in need.",
-	"",
-	"Please keep this acknowledgement of your donation for your tax records. SIRUM is a 501(c)3 nonprofit organization with the federal tax ID of 27-1103057. No goods or services were provided in exchange for your generous financial donation. Your donation is tax deductible to the full extent allowed by law.",
-	"",
-	"Thank you again for your support of SIRUM. If you have any questions related to your contribution, please contact us at 650-488-7434 or by email at gifts@sirum.org.",
-	"",
-	"Best,",
-  "The SIRUM Team"
+	"Your SIRUM Donation Request Is Processing",
+	"Thank you for submitting a request to donate your unused medications!<br><br>
+	A SIRUM team member will reach out to you within one business day with your shipping label and information<br>"
 );

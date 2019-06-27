@@ -132,35 +132,25 @@ class Pdf
 	}
 
 
-
-	function individual_manifest($file,$arr_json_items){
-		echo "making manifest";
-		flush();
+	/**
+	/ Individual manifest
+	/Builds the manifest for an individaul donor
+	**/
+	function individual_manifest($file,$manifest){
 
 		require_once('../app/libraries/pdf/fpdi.php');
 
 		$pdf = new FPDI('P', 'mm', 'Letter');
-
 		$pdf->SetAutoPageBreak(false);
-
 		$pdf->AddPage();
 
-		//ignore pagecount for now since we know each types pagecount
-		$template_name = "Label Only.pdf";
-
+		$template_name = "SIRUM Letterhead.pdf";
 		$pagecount = $pdf->setSourceFile(file::path('template', $template_name));
-
 		$tmpl = $pdf->importPage(1);
-
 		$pdf->useTemplate($tmpl, 0, 0);
-
 		$pdf->SetLeftMargin(12);
-
 		$pdf->SetY(28);
-
 		$pdf->SetFont('Helvetica', '', 10);
-
-		$manifest = $arr_json_items;
 		$bold = false;
 
 		//Add header
@@ -169,9 +159,9 @@ class Pdf
 		$pdf->Write(5, 'Manifest of Donated Medicines');
 		$pdf->SetFont('', '', 11);
 		$pdf->SetTextColor(64);
-
 		$pdf->SetY(40);
 
+		//Add items to the manifest
 		foreach ($manifest as $i => $medicine){
 
 			$y_pos = $pdf->GetY();
@@ -179,7 +169,6 @@ class Pdf
 			if($y_pos >= 200){//then we're approaching bottom, so extend manifest to new page
 
 				$pdf->Ln(10);//add new lines between
-
 				$pdf->SetFont('', 'B', 20);
 				$pdf->Write(5, 'Continued on next page');
 				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
@@ -189,42 +178,28 @@ class Pdf
 				$pdf->SetLeftMargin(12);
 				$pdf->SetY(28);
 
-				//Add header
+				//Add header to new page
 				$pdf->SetFont('', 'B', 20);
 				$pdf->SetTextColor(68, 200, 245);
 				$pdf->Write(5, 'Manifest Continued');
 				$pdf->SetFont('', '', 11);
 				$pdf->SetTextColor(64);
 				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-
 				$pdf->SetY(40);
 
 			}
 
+			$elements_to_include = array("Drug Name Strength","National Drug Code","Quantity","Expiration Date","Manufacturer");
 
+			foreach($elements_to_include as $i => $attr){
+				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+				$pdf->Write(5, $attr.": ");
+				$attr_camelCase = str_replace(" ","",$attr);
+				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+				$pdf->Write(5, mb_convert_encoding($medicine->$attr_camelCase, 'windows-1252'));
+				$pdf->Ln(5);//add new lines between
 
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, 'Drug Name: ');
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, mb_convert_encoding($medicine->DrugNameStrength, 'windows-1252'));
-			$pdf->Ln(5);//add new lines between
-
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, 'National Drug Code: ');
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, mb_convert_encoding($medicine->NationalDrugCode, 'windows-1252'));
-			$pdf->Ln(5);//add new lines between
-
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, 'Quantity: ');
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, mb_convert_encoding($medicine->Quantity, 'windows-1252'));
-			$pdf->Ln(5);//add new lines between
-
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, 'Expiration Date: ');
-			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
-			$pdf->Write(5, mb_convert_encoding($medicine->ExpirationDate, 'windows-1252'));
+			}
 
 			$pdf->Ln(15);//add new lines between
 		}
@@ -233,6 +208,13 @@ class Pdf
 
 	}
 
+
+	/**
+	/
+	/ Individual label
+	/ Builds a donation label file for individual medicine donors
+	/
+	**/
 	function individual_label($file,$donation){
 
 		require_once('../app/libraries/pdf/fpdi.php');
@@ -244,72 +226,71 @@ class Pdf
 		$pdf->AddPage();
 
 		//ignore pagecount for now since we know each types pagecount
-		$template_name = "Label Only.pdf";
-
+		$template_name = "SIRUM Letterhead.pdf";
 		$pagecount = $pdf->setSourceFile(file::path('template', $template_name));
 		$tmpl = $pdf->importPage(1);
+
 		$pdf->SetFont('Helvetica', '', 10);
-
-
 		$pdf->useTemplate($tmpl, 0, 0);
 		$pdf->SetLeftMargin(12);
-
-
-		//Make the thank you Letter
-		//Insert the dynamic donor and donee instructions
-		//We have to convert our mini-syntax into PDF formatting
 		$pdf->SetY(24);
-
-		//Either add donation instructions, or thanks message
-		$split = $donation->label_text;
-
 		$out  = '';
 		$bold = false;
 		$pdf->Ln(5);//add new lines between
 
-		foreach ($split as $i => $line)
+		//Add header
+		$pdf->SetFont('', 'B', 20);
+		$pdf->SetTextColor(68, 200, 245);
+		$pdf->Write(5, 'Thank you for donating!');
+		$pdf->SetFont('', '', 11);
+		$pdf->SetTextColor(64);
+		$pdf->Ln(5);
+
+		foreach ($donation->label_text as $i => $line)
 		{
-			$pdf->Ln(5);//add new lines between
-			if(strpos($line,"<donor_name>") !== FALSE) $line = str_replace("<donor_name>",$donation->donor_org, $line);
-			if(strpos($line,"<donation_date>") !== FALSE) $line = str_replace("<donation_date>",date("F j, Y"), $line);
-
-			//First line is the heading
-			if ($i == 0)
-			{
-				$pdf->SetFont('', 'B', 20);
-				$pdf->SetTextColor(68, 200, 245);
-				$pdf->Write(5, $line);
-				$pdf->SetFont('', '', 11);
-				$pdf->SetTextColor(64);
-				$pdf->Ln(5);
-
-				continue;
-			}
-
-			if ($line == '')
-			{
-				$pdf->Ln(5);
-				continue;
-			}
-
+			$pdf->Ln(5);
 			$pdf->Write(5, mb_convert_encoding($line, 'windows-1252'));
 		}
 
-
-		//Make the label page
+		//Make the actual label page
 		$pdf->AddPage();
 		$pdf->useTemplate($tmpl, 0, 0);
 		$pdf->SetLeftMargin(12);
 		$pdf->SetY(28);
+
+		//Text for the checkboxes, donors already have to check them on the form itself
+		$checkboxes = array("Is not a controlled substance (no narcotics or opiods)","Will not expire for at least 3 months","Is in sealed packaging (standard amber vials not eligible)","Does not require refrigeration","Understand there is a $10+ shipping charge");
+
+		//Add the header
+		$pdf->SetFont('', 'B', 20);
+		$pdf->SetTextColor(68, 200, 245);
+		$pdf->Write(5, 'Donation Criteria');
+		$pdf->SetFont('', '', 11);
+		$pdf->SetTextColor(64);
+		$pdf->Ln(10);
+		$pdf->Write(5, 'I have confirmed that the medicines included in this donation meet the following criteria:');
+		$pdf->Ln(8);
+
+
+		foreach($checkboxes as $i => $condition){
+				//add the checkbox
+				$pdf->SetFont('ZapfDingbats', '', 20);
+				$pdf->Write(5, chr(113));
+				$pdf->SetFont('Helvetica', '', 11);
+				//add condition
+				$pdf->Write(5, mb_convert_encoding('  '.$condition, 'windows-1252'));
+				$pdf->Ln(8);
+		}
 
 		//Slightly different position for label vs donation coversheet
 		$pdf->Image("$file.png", 11, 105, -200);
 
 		unlink("$file.png");
 
-
 		$pdf->Output($file, "F");
 	}
+
+
 
 /**
 | -------------------------------------------------------------------------
@@ -327,8 +308,6 @@ class Pdf
 
 	function label($file, $donation, $tracking, $label_only = FALSE)
 	{
-		echo "making label";
-		flush();
 		require_once('../app/libraries/pdf/fpdi.php');
 
 		$pdf = new FPDI('P', 'mm', 'Letter');
@@ -338,7 +317,7 @@ class Pdf
 		$pdf->AddPage();
 
 		//ignore pagecount for now since we know each types pagecount
-		$template_name = $label_only ? "Label Only.pdf" : "Donation Coversheet.pdf";
+		$template_name = $label_only ? "SIRUM Letterhead.pdf" : "Donation Coversheet.pdf"; //todo only use donation coversheet
 
 		$pagecount = $pdf->setSourceFile(file::path('template', $template_name));
 
@@ -370,28 +349,16 @@ class Pdf
 		//We have to convert our mini-syntax into PDF formatting
 		$pdf->SetY(24);
 
-		//Either add donation instructions, or thanks message
 
-		$split = array();
+		$split = str_replace(["\n", "\n\n\n\n", "*\n", "\n[]"], ["\n\n", "\n\n\n", "*", "[]"], trim("$donation->donee_instructions\n$donation->donor_instructions"));
+		$split = preg_split('/\n|(\*|\[\])/', $split, -1, PREG_SPLIT_DELIM_CAPTURE);
 
-		if($label_only){
-			$split = $donation->label_text;
-		} else {			//Trim is in case no donee instruction, then we want the donor instruction to have its first line as the title ($i == 0 a few lines below).
-			$split = str_replace(["\n", "\n\n\n\n", "*\n", "\n[]"], ["\n\n", "\n\n\n", "*", "[]"], trim("$donation->donee_instructions\n$donation->donor_instructions"));
-			$split = preg_split('/\n|(\*|\[\])/', $split, -1, PREG_SPLIT_DELIM_CAPTURE);
-		}
 
 		$out  = '';
 		$bold = false;
 
 		foreach ($split as $i => $line)
 		{
-			if($label_only){
-				$pdf->Ln(5);//add new lines between
-				if(strpos($line,"<donor_name>") !== FALSE) $line = str_replace("<donor_name>",$donation->donor_org, $line);
-				if(strpos($line,"<donation_date>") !== FALSE) $line = str_replace("<donation_date>",date("F j, Y"), $line);
-			}
-
 			//First line is the heading
 			if ($i == 0)
 			{

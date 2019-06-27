@@ -191,10 +191,12 @@ class donation extends MY_Model
 	}
 
 
-	function individual_manifest($list){
-		$file = 'last_manifest.pdf';//TODO: make this a unqiue val based on the list or something -- OR USE NAME
+	//Creates a manifest of an invidiual donation
+	function individual_manifest($list, $donor_name){
 
-		if (true)//( ! file::exists('label', $file)) //TODO: uncomment
+		$file = $donor_name.gmdate('_d-m-Y').'_manifest.pdf';
+
+		if(true) //( ! file::exists('label', $file)) //TODO uncomment
 		{
 			$label = pdf::individual_manifest(file::path('label', $file), $list);
 		}
@@ -208,15 +210,16 @@ class donation extends MY_Model
 	function label($donation, $label_only = FALSE)
 	{
 
-		$file = self::reference($donation).'_label.pdf';
+		$file = $label_only ? $donation->donor_org.gmdate('_d-m-Y').'_label.pdf' : self::reference($donation).'_label.pdf';
 
-		if (true)//( ! file::exists('label', $file)) //TODO: uncomment
+		if(true)// ( ! file::exists('label', $file)) //TODO uncomment
 		{
 			$label = fedex::label(file::path('label', $file), $donation);
 
 			if($label['error'])
 			{
-				return log::error("Fedex unable to make a shipping label because $label[error]");
+				log::error("Fedex unable to make a shipping label because $label[error]");
+				return "Fedex unable to make a shipping label because $label[error]";
 			}
 
 			//Donee boxes won't have a donation_id
@@ -230,7 +233,8 @@ class donation extends MY_Model
 
 			if ($label['error'])
 			{
-				return log::info("Pdf unable to make a shipping label because $label[error]");
+				log::info("Pdf unable to make a shipping label because $label[error]");
+				return "Pdf unable to make a shipping label because $label[error]";
 			}
 
 			log::info("Shipping label created");
@@ -238,6 +242,8 @@ class donation extends MY_Model
 
 		return $file;
 	}
+
+
 
 	function pickup($donation_id, $start = '', $date = '', $location = '')
 	{
