@@ -189,7 +189,8 @@ class Pdf
 
 			}
 
-			$elements_to_include = array("Drug Name Strength","National Drug Code","Quantity","Expiration Date","Manufacturer");
+			//$elements_to_include = array("Drug Name Strength","National Drug Code","Quantity","Expiration Date","Manufacturer"); //To add Manufacturer back here, do that here
+			$elements_to_include = array("Drug Name Strength","National Drug Code","Quantity","Expiration Date");
 
 			foreach($elements_to_include as $i => $attr){
 				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
@@ -259,7 +260,7 @@ class Pdf
 		$pdf->SetY(28);
 
 		//Text for the checkboxes, donors already have to check them on the form itself
-		$checkboxes = array("Is not a controlled substance (no narcotics or opiods)","Will not expire for at least 3 months","Is in sealed packaging (standard amber vials not eligible)","Does not require refrigeration","Understand there is a $10+ shipping charge");
+		$checkboxes = array("Is not a controlled substance (no narcotics or opiods)","Will not expire for at least 3 months","Is in sealed packaging (standard amber vials not eligible)","Does not require refrigeration");
 
 		//Add the header
 		$pdf->SetFont('', 'B', 20);
@@ -275,12 +276,24 @@ class Pdf
 		foreach($checkboxes as $i => $condition){
 				//add the checkbox
 				$pdf->SetFont('ZapfDingbats', '', 20);
-				$pdf->Write(5, chr(113));
+				$temp_x = $pdf->GetX() + 1; //this little difference helps with lining up check over boxes
+				$temp_y = $pdf->GetY() - 1;
+				$pdf->Write(5, chr(113)); //add checkboxes
+				$pdf->SetXY($temp_x,$temp_y);
+				$pdf->Write(5, chr(51)); //check them
 				$pdf->SetFont('Helvetica', '', 11);
 				//add condition
 				$pdf->Write(5, mb_convert_encoding('  '.$condition, 'windows-1252'));
 				$pdf->Ln(8);
 		}
+
+		//Add a note above the label itself
+		$pdf->Ln(15);
+		$pdf->SetFont('', 'B', 20);
+		$pdf->SetTextColor(68, 200, 245);
+		$pdf->Write(5, 'Shipping Label:');
+		$pdf->SetFont('', '', 11);
+		$pdf->SetTextColor(64);
 
 		//Slightly different position for label vs donation coversheet
 		$pdf->Image("$file.png", 11, 105, -200);

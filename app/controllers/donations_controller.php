@@ -586,9 +586,9 @@ function _send_error_email($error_text,$debugging_objects = array(), $debugging_
 	$email_body .= '<br><br><b>Raw POSTed data:</b><br><br>';
 	$email_body .= urldecode(file_get_contents('php://input'));
 
-	$debug_emails = array('omar@sirum.org');
+	$debug_accounts = array('omar@sirum.org', 'adam@sirum.org');
 
-	foreach ($debug_emails as $i => $email_addr) {
+	foreach ($debug_accounts as $i => $email_addr) {
 		admin::email($email_subject,$email_body, $email_addr,array());
 	}
 
@@ -596,7 +596,7 @@ function _send_error_email($error_text,$debugging_objects = array(), $debugging_
 }
 
 
-//Takes the json from Cognito's post
+//Takes the json from the POST
 function _build_individual_donation($raw_data){
 
 		$med_list = $raw_data->ListOfDonatedMedicine; //an array of jsons
@@ -609,14 +609,18 @@ function _build_individual_donation($raw_data){
 		$donor_city = $donor_addr_obj->City;
 
 		//Can't use state name, have to use abbreviation bc Fedex otherwise gets alittle freaky
-		//TODO: handle if we can't find state
-		$donor_state = self::$states[$donor_addr_obj->State];
+		$donor_state = '';
+
+		if(array_key_exists($donor_addr_obj->State, self::$states)){ //if not, it'll throw a fedex error we catch down the line
+			$donor_state = self::$states[$donor_addr_obj->State];
+		}
+
 		$donor_zipcode = $donor_addr_obj->PostalCode;
 
 		$dummy_donor_id = 818; //this is just for utc time lookup for pickup, but there'll be no pickups so doesnt matter
 		$donor_instructions = '';
 
-		$donee = org::find(1); //TODO: donor id of the actual recipient for individual donations
+
 		$raw_label_text = text::get('label_thank_you');
 		$label_text = array();
 
@@ -641,13 +645,13 @@ function _build_individual_donation($raw_data){
 			'donor_zip' 	=> $donor_zipcode,
 			'donor_instructions' => $donor_instructions,
 
-			'donee_instructions' => $donee->instructions,
-			'donee_id' 		=> $donee->org_id,
-			'donee_org' 	=> $donee->org_name,
-			'donee_street' => $donee->street,
-			'donee_city' 	=> $donee->city,
-			'donee_state'	=> $donee->state,
-			'donee_zip' 	=> $donee->zipcode,
+			//Information for the Wyoming Medication Donation Program
+			'donee_instructions' => '',
+			'donee_org' 	=> "Wyoming Medication Donation Program",
+			'donee_street' => "2300 Capitol Ave, Suite B27",
+			'donee_city' 	=> "Cheyenne",
+			'donee_state'	=> "Wyoming",
+			'donee_zip' 	=> "82002",
 
 			'label_text' => $label_text,
 			'donor_email' => $donor_email,

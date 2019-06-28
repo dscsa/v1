@@ -196,9 +196,13 @@ class donation extends MY_Model
 
 		$file = $donor_name.gmdate('_d-m-Y').'_manifest.pdf';
 
-		if(true) //( ! file::exists('label', $file)) //TODO uncomment
+		if( ! file::exists('label', $file))
 		{
-			$label = pdf::individual_manifest(file::path('label', $file), $list);
+			try{
+				$manifest = pdf::individual_manifest(file::path('label', $file), $list);
+			}catch(Exception $e){
+				return $e;
+			}
 		}
 
 		return $file;
@@ -212,7 +216,7 @@ class donation extends MY_Model
 
 		$file = $label_only ? $donation->donor_org.gmdate('_d-m-Y').'_label.pdf' : self::reference($donation).'_label.pdf';
 
-		if(true)// ( ! file::exists('label', $file)) //TODO uncomment
+		if( ! file::exists('label', $file))
 		{
 			$label = fedex::label(file::path('label', $file), $donation);
 
@@ -227,7 +231,6 @@ class donation extends MY_Model
 			{
 				self::update($label['success'], $donation->donation_id);
 			}
-
 
 			$label = $label_only ? pdf::individual_label(file::path('label', $file), $donation) : pdf::label(file::path('label', $file), $donation, $label['success']['tracking_number']);
 
