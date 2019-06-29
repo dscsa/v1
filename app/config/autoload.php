@@ -18,11 +18,11 @@
 //if they need to be initialized then load them as normal
 function __autoload($class)
 {
-	
+
     if (strpos($class, 'CI_') !== 0 AND strpos($class, 'MY_') !== 0 )
     {
 		$class = str_replace('\\', '/', $class);
-		
+
 		if (preg_match('#(helpers|models|libraries)#', $class))
 		{
 			include_once APPPATH.$class.EXT;
@@ -32,25 +32,25 @@ function __autoload($class)
 			include_once APPPATH.'core/'.config_item('subclass_prefix').'Library'.EXT;
 
 			include_once APPPATH.'core/'.config_item('subclass_prefix').'Helper'.EXT;
-			
+
 			include_once APPPATH.'helpers/'.$class.EXT;
 		}
 		else if (file_exists(APPPATH.'models/'.$class.EXT))
 		{
 			include_once BASEPATH.'core/Model'.EXT;
-			
+
 			include_once APPPATH.'core/MY_Model'.EXT;
-			
+
 			include_once APPPATH.'models/'.$class.EXT;
 		}
-		else if (file_exists(APPPATH.'libraries/'.$class.EXT)) 
+		else if (file_exists(APPPATH.'libraries/'.$class.EXT))
 		{
 			include_once APPPATH.'core/'.config_item('subclass_prefix').'Library'.EXT;
 
 			include_once APPPATH.'libraries/'.$class.EXT;
 		}
 		else if (file_exists(APPPATH.'controllers/'.$class.config_item('controller_suffix').EXT))
-		{	
+		{
 			include_once APPPATH.'controllers/'.$class.config_item('controller_suffix').EXT;
 		}
 		else
@@ -58,9 +58,9 @@ function __autoload($class)
 			// Assume this is a class extension request
 			include_once BASEPATH.'libraries/'.$class.EXT;
 
-			include_once APPPATH.'libraries/'.config_item('subclass_prefix').$class.EXT;	
+			include_once APPPATH.'libraries/'.config_item('subclass_prefix').$class.EXT;
 		}
-    }       
+    }
 }
 
 /*
@@ -149,7 +149,7 @@ $autoload['config'] = array();
 |
 */
 
-$autoload['language'] = array('confirm', 'email', 'permission', 'to');
+$autoload['language'] = array('confirm', 'label','email', 'permission', 'to');
 
 
 /*

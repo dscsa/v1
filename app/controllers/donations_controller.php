@@ -511,6 +511,54 @@ class Donations_controller extends MY_Controller
 		to::info(['Success!', 'Items added to the donation'], 'to_default', "donations/$donation_id");
 	}
 
+	/**
+	| -------------------------------------------------------------------------
+	|  Individual Donation
+	| -------------------------------------------------------------------------
+	|
+	| This funciton is called through the API, with information to
+	| create a donation from an individual
+	|
+	*/
+	function individual_donation(){
+
+			$email = text::get('email_individual_donation_success');
+			$attachments = array();
+
+			try{
+				$raw_data = (json_decode(urldecode(file_get_contents('php://input'))));
+			}catch(Exception $e){ //with this error, we can't even email them
+				self::_send_error_email($e);
+				return;
+			}
+
+			$donation = self::_build_individual_donation($raw_data);
+
+			$label_and_thanks_file = donation::label($donation,TRUE); //filepath to the label
+			$manifest_file = donation::individual_manifest($donation->donor_manifest, $donation->donor_org);
+
+		  //if either filenames don't include .pdf, there's been an error
+			if((strpos($label_and_thanks_file, '.pdf') === false) OR (strpos($manifest_file, '.pdf') === false)){
+
+				$error_text = '';
+				if(strpos($label_and_thanks_file, '.pdf') === false) $error_text .= $label_and_thanks_file.'      ';
+				if(strpos($manifest_file, '.pdf') === false) $error_text .= $manifest_file;
+
+				$email = self::_send_error_email($error_text,array($raw_data,$donation), array('Raw JSON', 'Donation Object'));	//send email to debug team with full error message so we can manually create, while debugging whatever went wrong
+
+			} else { //only attach if no errors
+
+				$attachments = array('label/'.$label_and_thanks_file, 'label/'.$manifest_file);
+
+			}
+
+			$view = $this->load->view('common/email', ['body' => $email[1], 'user' => $donation->donor_org], true);
+
+			admin::email($email[0],$view, $donation->donor_email,$attachments);
+
+		}
+
+
 /*
 | -------------------------------------------------------------------------
 | Helper Functions
@@ -522,6 +570,154 @@ class Donations_controller extends MY_Controller
 |
 */
 
+
+//Sends an email to the debuggers on call, with as much relavant debugging info as possible
+function _send_error_email($error_text,$debugging_objects = array(), $debugging_tags = array()){
+	$email_subject = '[URGENT ACTION] Error with Individual Donation Request';
+	$email_body = "";
+
+	$email_body .= '<b>ERROR MESSAGE</b>: '.$error_text.'<br><br>';
+
+	foreach ($debugging_objects as $i => $obj) {
+		$email_body .= '<br><b>'.$debugging_tags[$i].':</b><br><br>';
+		$email_body .= json_encode($obj);
+	}
+
+	$email_body .= '<br><br><b>Raw POSTed data:</b><br><br>';
+	$email_body .= urldecode(file_get_contents('php://input'));
+
+	$debug_accounts = array('omar@sirum.org', 'adam@sirum.org');
+
+	foreach ($debug_accounts as $i => $email_addr) {
+		admin::email($email_subject,$email_body, $email_addr,array());
+	}
+
+	return text::get('email_individual_donation_failure');
+}
+
+
+//Takes the json from the POST
+function _build_individual_donation($raw_data){
+
+		$med_list = $raw_data->ListOfDonatedMedicine; //an array of jsons
+
+		$donor_name = $raw_data->MyName->FirstAndLast;
+		$donor_email = $raw_data->MyEmail;
+		$donor_addr_obj = $raw_data->MyAddress;
+		$donor_full_addr = $donor_addr_obj->FullAddress;
+		$donor_street = $donor_addr_obj->StreetAddress;
+		$donor_city = $donor_addr_obj->City;
+
+		//Can't use state name, have to use abbreviation bc Fedex otherwise gets alittle freaky
+		$donor_state = '';
+
+		if(array_key_exists($donor_addr_obj->State, self::$states)){ //if not, it'll throw a fedex error we catch down the line
+			$donor_state = self::$states[$donor_addr_obj->State];
+		}
+
+		$donor_zipcode = $donor_addr_obj->PostalCode;
+
+		$dummy_donor_id = 818; //this is just for utc time lookup for pickup, but there'll be no pickups so doesnt matter
+		$donor_instructions = '';
+
+
+		$raw_label_text = text::get('label_thank_you');
+		$label_text = array();
+
+		//Replace any variables in the thank you note
+		foreach ($raw_label_text as $i => $line){
+			if(strpos($line,"<donor_name>") !== FALSE) $line = str_replace("<donor_name>",$donor_name, $line);
+			if(strpos($line,"<donation_date>") !== FALSE) $line = str_replace("<donation_date>",date("F j, Y"), $line);
+			if(strpos($line,"<donor_addr>") !== FALSE) $line = str_replace("<donor_addr>",$donor_full_addr, $line);
+			if(strpos($line,"<donor_email>") !== FALSE) $line = str_replace("<donor_email>",$donor_email, $line);
+			$label_text[] = $line;
+		}
+
+
+		$donation = (object) array
+		(
+			'donation_id'  => 'individual',
+			'donor_id' 		=> $dummy_donor_id, //need this only for utc time lookup
+			'donor_org' 	=> $donor_name,
+			'donor_street' => $donor_street,
+			'donor_city' 	=> $donor_city,
+			'donor_state' 	=> $donor_state,
+			'donor_zip' 	=> $donor_zipcode,
+			'donor_instructions' => $donor_instructions,
+
+			//Information for the Wyoming Medication Donation Program
+			'donee_instructions' => '',
+			'donee_org' 	=> "Wyoming Medication Donation Program",
+			'donee_street' => "2300 Capitol Ave, Suite B27",
+			'donee_city' 	=> "Cheyenne",
+			'donee_state'	=> "Wyoming",
+			'donee_zip' 	=> "82002",
+
+			'label_text' => $label_text,
+			'donor_email' => $donor_email,
+			'donor_full_addr' => $donor_full_addr,
+			'donor_manifest' => $med_list
+		);
+
+		return $donation;
+
+}
+
+
+
+//Need this in order to turn Cognito's state name format into abbreviations
+static $states = array(
+	'Alabama'=>'AL',
+	'Alaska'=>'AK',
+	'Arizona'=>'AZ',
+	'Arkansas'=>'AR',
+	'California'=>'CA',
+	'Colorado'=>'CO',
+	'Connecticut'=>'CT',
+	'Delaware'=>'DE',
+	'Florida'=>'FL',
+	'Georgia'=>'GA',
+	'Hawaii'=>'HI',
+	'Idaho'=>'ID',
+	'Illinois'=>'IL',
+	'Indiana'=>'IN',
+	'Iowa'=>'IA',
+	'Kansas'=>'KS',
+	'Kentucky'=>'KY',
+	'Louisiana'=>'LA',
+	'Maine'=>'ME',
+	'Maryland'=>'MD',
+	'Massachusetts'=>'MA',
+	'Michigan'=>'MI',
+	'Minnesota'=>'MN',
+	'Mississippi'=>'MS',
+	'Missouri'=>'MO',
+	'Montana'=>'MT',
+	'Nebraska'=>'NE',
+	'Nevada'=>'NV',
+	'New Hampshire'=>'NH',
+	'New Jersey'=>'NJ',
+	'New Mexico'=>'NM',
+	'New York'=>'NY',
+	'North Carolina'=>'NC',
+	'North Dakota'=>'ND',
+	'Ohio'=>'OH',
+	'Oklahoma'=>'OK',
+	'Oregon'=>'OR',
+	'Pennsylvania'=>'PA',
+	'Rhode Island'=>'RI',
+	'South Carolina'=>'SC',
+	'South Dakota'=>'SD',
+	'Tennessee'=>'TN',
+	'Texas'=>'TX',
+	'Utah'=>'UT',
+	'Vermont'=>'VT',
+	'Virginia'=>'VA',
+	'Washington'=>'WA',
+	'West Virginia'=>'WV',
+	'Wisconsin'=>'WI',
+	'Wyoming'=>'WY'
+);
 
 }
 /* ------------------------------------------------------------------------- End of File -------------------------------------------------------------------------*/

@@ -72,12 +72,12 @@ function index()
 		view::full('admin', 'Labels', $v);
 	}
 
+
 	//Actually generates the labels, barely modified version of the old _index function so
 	//that it can take in values useful for mass label creation.
 	function _index($donor_id, $donee_id, $num_labels, $attn, $label_type, $manual)
 	{
 		$result_arr = [];
-
 
 		for ($i = 0; $i < $num_labels; $i++){
 			//create labels, return array of the pdf locations

@@ -1,5 +1,6 @@
 <?php
 
+
 //Generated Emails
 $lang['email_password'] = array
 (
@@ -71,4 +72,21 @@ $lang['email_missed_pickup'] = array
 (
 	"Pickup Missed",
 	html::link("donations/{1}", "Donation {1}")." with tracking number {2} from {0} was not picked up. Attempting to reschedule..."
+);
+
+$lang['email_individual_donation_success'] = array
+(
+	"Your SIRUM Donation Label",
+	"Thank you! To complete your donation:<br><br>
+	1. Print the attached shipping label and donation manifest<br>
+	2. Place the manifest inside the box and tape the shipping label to the outside.<br>
+	3. Seal the box and ".html::link('https://www.fedex.com/PickupApp/login?locale=en_US&appTab=FDXE','arrange a pickup')." or drop it off at the nearest FedEx pickup location<br>
+	4. Keep this email and two attachments for your records<br>"
+);
+
+$lang['email_individual_donation_failure'] = array
+(
+	"Your SIRUM Donation Request Is Processing",
+	"Thank you for submitting a request to donate your unused medications!<br><br>
+	A SIRUM team member will reach out to you within one business day with your shipping label and information<br>"
 );

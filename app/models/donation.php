@@ -190,19 +190,40 @@ class donation extends MY_Model
 		bkg::donation('manifest', $donation_id);
 	}
 
+
+	//Creates a manifest of an invidiual donation
+	function individual_manifest($list, $donor_name){
+
+		$file = $donor_name.gmdate('_d-m-Y').'_manifest.pdf';
+
+		if( ! file::exists('label', $file))
+		{
+			try{
+				$manifest = pdf::individual_manifest(file::path('label', $file), $list);
+			}catch(Exception $e){
+				return $e;
+			}
+		}
+
+		return $file;
+	}
+
+
 	// Create the label if necessary.  Return the file path.
 	// During donation::create task is run in background
-	function label($donation)
+	function label($donation, $label_only = FALSE)
 	{
-		$file = self::reference($donation).'_label.pdf';
 
-		if ( ! file::exists('label', $file))
+		$file = $label_only ? $donation->donor_org.gmdate('_d-m-Y').'_label.pdf' : self::reference($donation).'_label.pdf';
+
+		if( ! file::exists('label', $file))
 		{
 			$label = fedex::label(file::path('label', $file), $donation);
 
 			if($label['error'])
 			{
-				return log::error("Fedex unable to make a shipping label because $label[error]");
+				log::error("Fedex unable to make a shipping label because $label[error]");
+				return "Fedex unable to make a shipping label because $label[error]";
 			}
 
 			//Donee boxes won't have a donation_id
@@ -211,11 +232,12 @@ class donation extends MY_Model
 				self::update($label['success'], $donation->donation_id);
 			}
 
-			$label = pdf::label(file::path('label', $file), $donation, $label['success']['tracking_number']);
+			$label = $label_only ? pdf::individual_label(file::path('label', $file), $donation) : pdf::label(file::path('label', $file), $donation, $label['success']['tracking_number']);
 
 			if ($label['error'])
 			{
-				return log::info("Pdf unable to make a shipping label because $label[error]");
+				log::info("Pdf unable to make a shipping label because $label[error]");
+				return "Pdf unable to make a shipping label because $label[error]";
 			}
 
 			log::info("Shipping label created");
@@ -223,6 +245,8 @@ class donation extends MY_Model
 
 		return $file;
 	}
+
+
 
 	function pickup($donation_id, $start = '', $date = '', $location = '')
 	{
