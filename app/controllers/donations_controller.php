@@ -618,8 +618,16 @@ function _build_individual_donation($raw_data){
 		$donor_zipcode = $donor_addr_obj->PostalCode;
 
 		$dummy_donor_id = 818; //this is just for utc time lookup for pickup, but there'll be no pickups so doesnt matter
-		$donor_instructions = '';
+		$donor_instructions = "";
 
+		$donor_payment_obj = $raw_data->Order->LineItems;
+		$donated_amount = '';
+
+		foreach ($donor_payment_obj as $i => $item) {
+			if(strpos(strtolower($item->Name),"shipping cost") === FALSE){
+				if($item->Amount != "0") $donated_amount = " of $".$item->Amount;
+			}
+		}
 
 		$raw_label_text = text::get('label_thank_you');
 		$label_text = array();
@@ -630,6 +638,8 @@ function _build_individual_donation($raw_data){
 			if(strpos($line,"<donation_date>") !== FALSE) $line = str_replace("<donation_date>",date("F j, Y"), $line);
 			if(strpos($line,"<donor_addr>") !== FALSE) $line = str_replace("<donor_addr>",$donor_full_addr, $line);
 			if(strpos($line,"<donor_email>") !== FALSE) $line = str_replace("<donor_email>",$donor_email, $line);
+			if(strpos($line,"<donated_amount>") !== FALSE) $line = str_replace("<donated_amount>",$donated_amount, $line);
+
 			$label_text[] = $line;
 		}
 
