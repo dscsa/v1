@@ -8,7 +8,7 @@ $lang['label_thank_you'] = array
 	"",
   "Hello <donor_name>,",
 	"",
-  "Please accept our thanks for your generous donation on <donation_date>. Your support will go a long way in furthering SIRUM’s ability to save lives by connecting unopened, unexpired medications with people in need.",
+  "Please accept our thanks for your generous donation<donated_amount> on <donation_date>. Your support will go a long way in furthering SIRUM’s ability to save lives by connecting unopened, unexpired medications with people in need.",
 	"",
 	"Please keep this acknowledgement of your donation for your tax records. SIRUM is a 501(c)3 nonprofit organization with the federal tax ID of 27-1103057. No goods or services were provided in exchange for your generous financial donation. Your donation is tax deductible to the full extent allowed by law.",
 	"",
