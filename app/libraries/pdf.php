@@ -190,7 +190,7 @@ class Pdf
 			}
 
 			//$elements_to_include = array("Drug Name Strength","National Drug Code","Quantity","Expiration Date","Manufacturer"); //To add Manufacturer back here, do that here
-			$elements_to_include = array("Drug Name Strength","National Drug Code","Quantity","Expiration Date");
+			$elements_to_include = array("Drug Name Strength","National Drug Code","Formatted NDC", "Quantity","Expiration Date");
 
 			foreach($elements_to_include as $i => $attr){
 				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
