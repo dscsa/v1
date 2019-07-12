@@ -32,7 +32,7 @@ class admin extends MY_Model
 
 			case 'production':
 				$from = [EMAIL, 'SIRUM'];
-				$bcc = 'adam@sirum.org, victoria@sirum.org, george@sirum.org, omar@sirum.org, '.EMAIL.( $email ? ', '.SALESFORCE : '');
+				$bcc = 'adam@sirum.org, info@sirum.org, george@sirum.org, omar@sirum.org, '.EMAIL.( $email ? ', '.SALESFORCE : '');
 				break;
 		}
 
@@ -135,7 +135,7 @@ class admin extends MY_Model
 				if(count($donee_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);
 				}
-				//require an attn field for bulk 
+				//require an attn field for bulk
 				if(strlen($attn) == 0){
 					return self::$bulk['alerts'][] = array_merge($data,["No ATTN field provided for mailing"]);
 				}
