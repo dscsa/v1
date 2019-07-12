@@ -586,7 +586,7 @@ function _send_error_email($error_text,$debugging_objects = array(), $debugging_
 	$email_body .= '<br><br><b>Raw POSTed data:</b><br><br>';
 	$email_body .= urldecode(file_get_contents('php://input'));
 
-	$debug_accounts = array('omar@sirum.org', 'adam@sirum.org');
+	$debug_accounts = array('info@sirum.org','omar@sirum.org', 'adam@sirum.org');
 
 	foreach ($debug_accounts as $i => $email_addr) {
 		admin::email($email_subject,$email_body, $email_addr,array());
