@@ -461,17 +461,17 @@ class inventory extends MY_Model
 		if ((count($items) > 1) AND (!$looked_up_by_name))
 		{
 			//For colorado exact ndc's, if we've got multiple matches, do a name match
-			$name_trim = trim($name);
+			$name_trim = str_replace(",","",trim($name));
 			$name_match = false;
 			foreach($items as $item) {
-				if((strlen($exact_ndc) > 0) AND ((strpos($item->name,$name_trim) !== false) OR (strpos($item->description,$name_trim) !== false))){ //check if we match the generic or brand name
+				if((strlen($exact_ndc) > 0) AND ((strpos(str_replace(",","",$item->name),$name_trim) !== false) OR (strpos(str_replace(",","",$item->description),$name_trim) !== false))){ //check if we match the generic or brand name
 					$items = array();
 					$items[] = $item; //so items will be back to one length
 					$name_match = true;
 				}
 			}
 		}
-		
+
 		if($quasi_exact_lookup AND (count($items) > 1)) return array(); //otherwise we might be unable to add a drug
 		return $items;
 
