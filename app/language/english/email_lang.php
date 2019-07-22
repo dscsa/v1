@@ -81,7 +81,10 @@ $lang['email_individual_donation_success'] = array
 	1. Print the attached shipping label and donation manifest<br>
 	2. Place the manifest inside the box and tape the shipping label to the outside.<br>
 	3. Seal the box and ".html::link('https://www.fedex.com/PickupApp/login?locale=en_US&appTab=FDXE','arrange a pickup')." or drop it off at the nearest FedEx pickup location<br>
-	4. Keep this email and two attachments for your records<br>"
+	4. Keep this email and two attachments for your records<br><br>
+	If any of your medications are not eligible for donation, please dispose of them properly. Please drop them off at a ".html::link('https://apps2.deadiversion.usdoj.gov/pubdispsearch/spring/main?execution=e1s1','local collection site').".
+  If there is not a convenient collection site and the medications are not controlled substances, you can also dispose of them yourself: simply cross off your information from the prescription bottle, mix the medicine with something unappetizing (such as coffee grounds or kitty litter), and place it into your household trash.<br>
+	".html::link('https://www.fda.gov/drugs/safe-disposal-medicines/disposal-unused-medicines-what-you-should-know','Learn more about proper disposal from the FDA')."<br>"
 );
 
 $lang['email_individual_donation_failure'] = array
