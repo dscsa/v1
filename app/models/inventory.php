@@ -464,7 +464,7 @@ class inventory extends MY_Model
 			$name_trim = str_replace(",","",trim($name));
 			$name_match = false;
 			foreach($items as $item) {
-				if((strlen($exact_ndc) > 0) AND ((strpos(str_replace(",","",$item->name),$name_trim) !== false) OR (strpos(str_replace(",","",$item->description)cd,$name_trim) !== false))){ //check if we match the generic or brand name
+				if((strlen($exact_ndc) > 0) AND ((strpos(str_replace(",","",$item->name),$name_trim) !== false) OR (strpos(str_replace(",","",$item->description),$name_trim) !== false))){ //check if we match the generic or brand name
 					$items = array();
 					$items[] = $item; //so items will be back to one length
 					$name_match = true;
