@@ -257,7 +257,9 @@ class admin extends MY_Model
 		);
 	}
 
-  function drugs_by_donee_state($year) {
+  function drugs_by_donee_state($year = '2019') {
+
+    log::info("CALLED drugs_by_donee_state $year");
 
     set_time_limit(0);
 		$this->output->enable_profiler(FALSE);
@@ -303,9 +305,15 @@ class admin extends MY_Model
     LEFT JOIN item ON item.id = item_id
     GROUP BY item.name, org.state";
 
+    $query = "SELECT 'drug_name,donee_state,donor_qty,donee_qty,accepted_qty,donor_count,donee_count,accepted_count,donor_value,donee_value,accepted_value' UNION ALL ($query)";
+
     @unlink($path);
 
+    log::info("START drugs_by_donee_state $year - $query");
+
 		$this->db->query($query);
+
+    log::info("STOP drugs_by_donee_state $year - $query");
   }
 
 
