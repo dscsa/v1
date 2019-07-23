@@ -2,6 +2,14 @@
 class Admin_controller extends MY_Controller
 {
 
+
+	function test() {
+
+		 log::info("ADMIN CONTROL START");
+		 bkg::admin('drugs_by_donee_state', date("Y")); //drugs_by_donee_state.csv of current year
+		 log::info("ADMIN CONTROL STOP");
+	}
+
 /**
 | -------------------------------------------------------------------------
 |  Index

@@ -285,17 +285,17 @@ class admin extends MY_Model
        SELECT
           donee_id,
           item_id,
-          IFNULL(SUM(donation_items.donor_qty), "") as donor_qty,
-    			IFNULL(SUM(donation_items.donee_qty), "") as donee_qty,
-    			IFNULL(SUM(donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_qty,
+          IFNULL(SUM(donation_items.donor_qty), '') as donor_qty,
+    			IFNULL(SUM(donation_items.donee_qty), '') as donee_qty,
+    			IFNULL(SUM(donation_items.donee_qty * (donation_items.archived = 0)), '') as accepted_qty,
 
     			SUM(IF(donation_items.donor_qty is not null, 1, 0)) as donor_count,
     			SUM(IF(donation_items.donee_qty is not null, 1, 0)) as donee_count,
     			SUM(IF(donation_items.archived = 0, 1, 0)) as accepted_count,
 
-    			IFNULL(SUM(donation_items.price * donation_items.donor_qty), "") as donor_value,
-    			IFNULL(SUM(donation_items.price * donation_items.donee_qty), "") as donee_value,
-    			IFNULL(SUM(donation_items.price * donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_value
+    			IFNULL(SUM(donation_items.price * donation_items.donor_qty), '') as donor_value,
+    			IFNULL(SUM(donation_items.price * donation_items.donee_qty), '') as donee_value,
+    			IFNULL(SUM(donation_items.price * donation_items.donee_qty * (donation_items.archived = 0)), '') as accepted_value
        FROM donation_items
        LEFT JOIN donation ON donation.id = donation_items.donation_id
        WHERE YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) = '$year'
