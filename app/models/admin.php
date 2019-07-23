@@ -257,5 +257,59 @@ class admin extends MY_Model
 		);
 	}
 
+  function drugs_by_donee_state($year) {
+
+    set_time_limit(0);
+		$this->output->enable_profiler(FALSE);
+		$this->db->save_queries = false;
+
+    $path = dirname(__FILE__).'/../'.file::path('upload', "drugs_by_donee_state.csv");
+
+    $query = "
+    SELECT
+      item.name,
+      org.state,
+      SUM(donor_qty),
+      SUM(donee_qty),
+      SUM(accepted_qty),
+      SUM(donor_count),
+      SUM(donee_count),
+      SUM(accepted_count),
+      SUM(donor_value),
+      SUM(donee_value),
+      SUM(accepted_value)
+      INTO OUTFILE '$path' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n'
+      FROM org
+    JOIN (
+       SELECT
+          donee_id,
+          item_id,
+          IFNULL(SUM(donation_items.donor_qty), "") as donor_qty,
+    			IFNULL(SUM(donation_items.donee_qty), "") as donee_qty,
+    			IFNULL(SUM(donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_qty,
+
+    			SUM(IF(donation_items.donor_qty is not null, 1, 0)) as donor_count,
+    			SUM(IF(donation_items.donee_qty is not null, 1, 0)) as donee_count,
+    			SUM(IF(donation_items.archived = 0, 1, 0)) as accepted_count,
+
+    			IFNULL(SUM(donation_items.price * donation_items.donor_qty), "") as donor_value,
+    			IFNULL(SUM(donation_items.price * donation_items.donee_qty), "") as donee_value,
+    			IFNULL(SUM(donation_items.price * donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_value
+       FROM donation_items
+       LEFT JOIN donation ON donation.id = donation_items.donation_id
+       WHERE YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) = '$year'
+      GROUP BY donee_id, item_id
+    ) as sum ON donee_id = org.id
+    LEFT JOIN item ON item.id = item_id
+    GROUP BY item.name, org.state";
+
+    @unlink($path);
+
+		$this->db->query($query);
+  }
+
+
+
+
 
 }  // END OF CLASS

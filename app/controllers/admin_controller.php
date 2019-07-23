@@ -383,7 +383,45 @@ function index()
 		//Attempt to prevent browser (and Cloudflare's 100 sec) timeouts
 		header('Content-Description: File Transfer');
 		header('Content-Type: application/octet-stream');
-		header('Content-Disposition: attachment; filename="' . "SIRUM $file $date.csv" . '"');
+		header('Content-Disposition: attachment; filename="' . "SIRUM $file.csv" . '"');
+		header('Expires: 0');
+		header('Cache-Control: must-revalidate');
+		header('Pragma: public');
+		header('Content-Length: ' . filesize($path));
+
+		// Repeat reading until EOF
+		while (!feof($fh)) {
+		    echo fread($fh, $chunk);
+		    ob_flush();  // flush output
+		    flush();
+		}
+	}
+
+	function drugs_by_donee_state($year) {
+
+		user::login($org_id, 'admin');
+
+		set_time_limit(0);
+		$this->output->enable_profiler(FALSE);
+
+		$path = dirname(__FILE__).'/../'.file::path('upload', "drugs_by_donee_state.csv");
+
+		//ignore_user_abort(false);
+		ini_set('output_buffering', 0);
+		ini_set('zlib.output_compression', 0);
+
+		$chunk = 1 * 1024 * 1024; // bytes per chunk (1 MB)
+
+		$fh = fopen($path, "rb");
+
+		if ($fh === false) {
+		    echo "Unable open file.  Check that the cron job ran properly";
+		}
+
+		//Attempt to prevent browser (and Cloudflare's 100 sec) timeouts
+		header('Content-Description: File Transfer');
+		header('Content-Type: application/octet-stream');
+		header('Content-Disposition: attachment; filename="' . "SIRUM drugs_by_donee_state.csv" . '"');
 		header('Expires: 0');
 		header('Cache-Control: must-revalidate');
 		header('Pragma: public');
