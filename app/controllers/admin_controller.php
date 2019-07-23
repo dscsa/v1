@@ -413,7 +413,7 @@ function index()
 		set_time_limit(0);
 		$this->output->enable_profiler(FALSE);
 
-		$path = dirname(__FILE__).'/../'.file::path('upload', "drugs_by_donee_state.csv");
+		$path = dirname(__FILE__).'/../'.file::path('upload', "drugs_by_donee_state $year.csv");
 
 		//ignore_user_abort(false);
 		ini_set('output_buffering', 0);
@@ -431,7 +431,7 @@ function index()
 		//Attempt to prevent browser (and Cloudflare's 100 sec) timeouts
 		header('Content-Description: File Transfer');
 		header('Content-Type: application/octet-stream');
-		header('Content-Disposition: attachment; filename="' . "SIRUM drugs_by_donee_state.csv" . '"');
+		header('Content-Disposition: attachment; filename="' . "SIRUM drugs_by_donee_state $year.csv" . '"');
 		header('Expires: 0');
 		header('Cache-Control: must-revalidate');
 		header('Pragma: public');

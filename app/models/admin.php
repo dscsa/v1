@@ -257,7 +257,7 @@ class admin extends MY_Model
 		);
 	}
 
-  function drugs_by_donee_state($year = '2019') {
+  function drugs_by_donee_state($year) {
 
     log::info("CALLED drugs_by_donee_state $year");
 
@@ -265,7 +265,7 @@ class admin extends MY_Model
 		$this->output->enable_profiler(FALSE);
 		$this->db->save_queries = false;
 
-    $path = dirname(__FILE__).'/../'.file::path('upload', "drugs_by_donee_state.csv");
+    $path = dirname(__FILE__).'/../'.file::path('upload', "drugs_by_donee_state $year.csv");
 
     $query = "SELECT
       item.name,
