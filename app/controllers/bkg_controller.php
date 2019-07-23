@@ -116,6 +116,8 @@ class Bkg_controller extends MY_Controller
 		   done > /dev/null &
 		");
 
+		log::info("BKG 1 - $class::$func::".json_encode($args));
+
 		// Not sure why security doesn't clear this, but
 		// it was causing an error in unserialize which
 		// corrupted the data being sent.
@@ -125,6 +127,8 @@ class Bkg_controller extends MY_Controller
 		{
 			$args[] = unserialize(urldecode($arg));
 		}
+
+		log::info("BKG 2 - $class::$func::".json_encode($args));
 
 		if(file_exists(APPPATH.'models/'.$class.EXT))
 		{
