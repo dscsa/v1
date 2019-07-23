@@ -126,6 +126,8 @@ class Bkg_controller extends MY_Controller
 			$args[] = unserialize(urldecode($arg));
 		}
 
+		log::info("BKG - $class::$func::".json_encode($args));
+
 		if(file_exists(APPPATH.'models/'.$class.EXT))
 		{
 			$this->load->model($class);
