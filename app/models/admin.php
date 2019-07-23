@@ -267,8 +267,7 @@ class admin extends MY_Model
 
     $path = dirname(__FILE__).'/../'.file::path('upload', "drugs_by_donee_state.csv");
 
-    $query = "
-    SELECT
+    $query = "SELECT
       item.name,
       org.state,
       SUM(donor_qty),
@@ -280,8 +279,8 @@ class admin extends MY_Model
       SUM(donor_value),
       SUM(donee_value),
       SUM(accepted_value)
-      INTO OUTFILE '$path' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n'
-      FROM org
+    INTO OUTFILE '$path' FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '\"' LINES TERMINATED BY '\n'
+    FROM org
     JOIN (
        SELECT
           donee_id,
@@ -305,7 +304,7 @@ class admin extends MY_Model
     LEFT JOIN item ON item.id = item_id
     GROUP BY item.name, org.state";
 
-    $query = "SELECT 'drug_name,donee_state,donor_qty,donee_qty,accepted_qty,donor_count,donee_count,accepted_count,donor_value,donee_value,accepted_value' UNION ALL ($query)";
+    $query = "SELECT 'drug_name','donee_state','donor_qty','donee_qty','accepted_qty','donor_count','donee_count','accepted_count','donor_value','donee_value','accepted_value' UNION ALL ($query)";
 
     @unlink($path);
 
@@ -315,9 +314,4 @@ class admin extends MY_Model
 
     log::info("STOP drugs_by_donee_state $year - $query");
   }
-
-
-
-
-
 }  // END OF CLASS
