@@ -378,6 +378,7 @@ function index()
 
 		if ($fh === false) {
 		    echo "Unable open file.  Check that the cron job ran properly";
+				return;
 		}
 
 		//Attempt to prevent browser (and Cloudflare's 100 sec) timeouts
@@ -416,6 +417,7 @@ function index()
 
 		if ($fh === false) {
 		    echo "Unable open file.  Check that the cron job ran properly";
+				return;
 		}
 
 		//Attempt to prevent browser (and Cloudflare's 100 sec) timeouts
