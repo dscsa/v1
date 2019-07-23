@@ -134,7 +134,15 @@ class Bkg_controller extends MY_Controller
 		{
 			log::info("BKG 3 - ".APPPATH.'models/'.$class.EXT);
 
-			$this->load->model($class);
+			try {
+
+				$this->load->model($class);
+
+			} catch (Exception $e) {
+
+				log::info("BKG MODEL LOAD ERROR ".$e->getMessage());
+
+			}
 
 			log::info("BKG 4 - ".APPPATH.'models/'.$class.EXT);
 
