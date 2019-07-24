@@ -623,7 +623,7 @@ function _build_individual_donation($raw_data){
 
 		foreach ($donor_payment_obj as $i => $item) {
 			if(strpos(strtolower($item->Name),"shipping cost") === FALSE){
-				if($item->Amount != "0") $donated_amount = " of $".$item->Amount;
+				if($item->Amount != "0") $donated_amount = " and a monetary donation of $".$item->Amount;
 			}
 		}
 
