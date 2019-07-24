@@ -522,9 +522,6 @@ class Donations_controller extends MY_Controller
 	*/
 	function individual_donation(){
 
-			$email = text::get('email_individual_donation_success');
-			$attachments = array();
-
 			try{
 				$raw_data = (json_decode(urldecode(file_get_contents('php://input'))));
 			}catch(Exception $e){ //with this error, we can't even email them
@@ -545,9 +542,10 @@ class Donations_controller extends MY_Controller
 				if(strpos($manifest_file, '.pdf') === false) $error_text .= $manifest_file;
 
 				$email = self::_send_error_email($error_text,array($raw_data,$donation), array('Raw JSON', 'Donation Object'));	//send email to debug team with full error message so we can manually create, while debugging whatever went wrong
+				$attachments = array();
 
 			} else { //only attach if no errors
-
+				$email = text::get('email_individual_donation_success', [$donation->donor_org, $donation->donor_city, $donation->donor_state]);
 				$attachments = array('label/'.$label_and_thanks_file, 'label/'.$manifest_file);
 
 			}
