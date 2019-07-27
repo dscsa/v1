@@ -190,7 +190,7 @@ class Pdf
 			}
 
 			//$elements_to_include = array("Drug Name Strength","National Drug Code","Quantity","Expiration Date","Manufacturer"); //To add Manufacturer back here, do that here
-			$elements_to_include = array("Drug Name Strength","National Drug Code","Formatted NDC", "Quantity","Expiration Date");
+			$elements_to_include = array("Drug Name Strength", "Expiration Date");
 
 			foreach($elements_to_include as $i => $attr){
 				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
@@ -199,8 +199,19 @@ class Pdf
 				$pdf->SetFont('', $bold = !$bold ? 'B' : '');
 				$pdf->Write(5, mb_convert_encoding($medicine->$attr_camelCase, 'windows-1252'));
 				$pdf->Ln(5);//add new lines between
-
 			}
+
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, "National Drug Code: ");
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, mb_convert_encoding($medicine->FormattedNDC.' ('.$medicine->NationalDrugCode.')', 'windows-1252'));
+			$pdf->Ln(5);//add new lines between
+
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, "Quantity: ");
+			$pdf->SetFont('', $bold = !$bold ? 'B' : '');
+			$pdf->Write(5, mb_convert_encoding($medicine->Qty.' '.$medicine->QtyType, 'windows-1252'));
+			$pdf->Ln(5);//add new lines between
 
 			$pdf->Ln(15);//add new lines between
 		}
