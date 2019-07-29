@@ -516,7 +516,9 @@ SP-Split status
 			case 'DD':
 			case 'IT':
 			case 'IX':
-			case 'AR': //shiptimestamp is sometimes the order created (OC) date so use explicit pickup time instead. Because we query different timespans throughout day, catch multiple transit codes as 'shipped'. The donation model code won't repeat any work once DB has a non-null date_shipped (and won't overwrite the original shipped timestamp). this is just a wider net 
+			case 'OD':
+			case 'IP':
+			case 'AR': //shiptimestamp is sometimes the order created (OC) date so use explicit pickup time instead. Because we query different timespans throughout day, catch multiple transit codes as 'shipped'. The donation model code won't repeat any work once DB has a non-null date_shipped (and won't overwrite the original shipped timestamp). this is just a wider net
 				return self::_return('success', ['date_shipped' => date::format($response['success']->TrackDetails->Events->Timestamp, DB_DATE_FORMAT)]);
 			case 'OC':
 				return self::_return('success', ['order_created' => null]);
