@@ -356,33 +356,45 @@ class donation extends MY_Model
 
 		//depending on time of day, check different date ranges
 		//tracking is triggered around the start of every hour
-		$curr_hour = intval(gmdate('H')) - 8; //server runs on GMT
+		$curr_hour = intval(gmdate('H')) - 7; //server runs on GMT
 
 		$cutoff_start = "";
 		$cutoff_end = "";
 
-		if(($curr_hour == 10) OR ($curr_hour == 15)){ //roughly 3PM PT is when we check labels made between 3-5 years ago, just the once
-       $cutoff_start = date('Y-m-d H:i:s',strtotime('-5 year'));
-       $cutoff_end = date('Y-m-d H:i:s',strtotime('-3 year'));
-		} else if(($curr_hour == 9) OR ($curr_hour == 12) OR ($curr_hour == 16)){ // we check for labels from 1-3 years ago, a couple times during the day, at noon and at 4PM PT
-       $cutoff_start = date('Y-m-d H:i:s',strtotime('-3 year'));
-       $cutoff_end = date('Y-m-d H:i:s',strtotime('-1 year'));
-		} else { //any other time, we check for labels in the last year (as of 02/2019 this was ~9,000)
-       $cutoff_start = date('Y-m-d H:i:s',strtotime('-1 year'));
-       $cutoff_end = date('Y-m-d H:i:s');
+		if(($curr_hour == 10) OR ($curr_hour == 15) OR ($curr_hour == 21)){ //before noon, check old labels
+			$cutoff_start = date('Y-m-d H:i:s',strtotime('-5 year'));
+			$cutoff_end = date('Y-m-d H:i:s',strtotime('-3 year'));
+		} else if(($curr_hour == 8) OR ($curr_hour == 12) OR ($curr_hour == 16) OR ($curr_hour == 20) OR ($curr_hour == 22)) {
+			$cutoff_start = date('Y-m-d H:i:s',strtotime('-3 year'));
+			$cutoff_end = date('Y-m-d H:i:s',strtotime('-1 year'));
+		} else {
+			$cutoff_start = date('Y-m-d H:i:s',strtotime('-1 year'));
+			$cutoff_end = date('Y-m-d H:i:s');
 		}
 
+		$all_recipients = self::_getAllRecipients();
+		$high_priority_ids = self::_getStateRecipientsString('CA,CO', $all_recipients); //high priority
+		$donee_condition = " IN (".$high_priority_ids.") ";
+
+		if(($curr_hour == 7)
+				OR ($curr_hour == 10)
+				OR ($curr_hour == 13)
+				OR ($curr_hour == 16)
+				OR ($curr_hour == 19)
+				OR ($curr_hour == 22)) $donee_condition = " NOT".$donee_condition; //less important but still do
 
 		log::info("Tracking donations 1");
 
-		//This was causing a exhaustion error
-		//$donations = self::_search(['date_received IS NULL'=>NULL, 'date_verified IS NULL'=>NULL, "tracking_number REGEXP '[0-9]{15}'"=>NULL, "donation.created >= '$created_cutoff'"=>NULL]);
+		$query = "SELECT donor_id, donee_id, tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL AND donee_id".$donee_condition."LIMIT 9999";
+		//echo $curr_hour."<br>".$donee_condition."<br>".$query."<br>"; //TODO delete
 
-		$query = "SELECT donor_id, donee_id, tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL LIMIT 9999";
+		//This was hitting our limit and missing some donations
+		//$query = "SELECT donor_id, donee_id, tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL LIMIT 9999";
 
 		log::info("Tracking donations 2");
 
 		$donations = $this->db->query($query);
+
 
 		log::info("Tracking donations 3 ".$this->db->last_query());
 
@@ -494,5 +506,25 @@ class donation extends MY_Model
 
 		return 'D'.$donation->donor_id.'R'.$donation->donee_id.'T'.$donation->donation_id.ucfirst(substr(ENVIRONMENT, 0, 1));
 	}
+
+	function _getAllRecipients(){
+		$query = "SELECT * FROM org WHERE approved != ''";
+		return $this->db->query($query)->result();
+	}
+
+
+	function _getStateRecipientsString($state, $all_orgs){
+		$ids = [];
+
+		foreach ($all_orgs as $org) {
+			if(strpos($state, $org->state) !== false){
+				$ids[] = $org->id;
+			}
+		}
+
+		$id_string = join(",",$ids);
+		return $id_string;
+	}
+
 
 }  // END OF CLASS
