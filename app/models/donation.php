@@ -386,7 +386,7 @@ class donation extends MY_Model
 		log::info("Tracking donations 1");
 
 		$query = "SELECT donor_id, donee_id, tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL AND donee_id".$donee_condition."LIMIT 9999";
-		//echo $curr_hour."<br>".$donee_condition."<br>".$query."<br>"; //TODO delete
+		echo $curr_hour."<br>".$donee_condition."<br>".$query."<br>"; //TODO delete
 
 		//This was hitting our limit and missing some donations
 		//$query = "SELECT donor_id, donee_id, tracking_number, date_pickup, date_shipped, donation.id as donation_id, donee_org.name as donee_org, donor_org.name as donor_org FROM donation JOIN org as donee_org ON donee_org.id = donation.donee_id JOIN org as donor_org ON donor_org.id = donation.donor_id WHERE date_received IS NULL AND date_verified IS NULL AND (donation.created BETWEEN '$cutoff_start' AND '$cutoff_end') AND tracking_number IS NOT NULL LIMIT 9999";
