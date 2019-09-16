@@ -456,6 +456,7 @@ class inventory extends MY_Model
 			}
 		}
 
+		//Test commit line
 		//If the NDC has mutiple matches in our DB then something is wrong!
 		//try to do a name match
 		if ((count($items) > 1) AND (!$looked_up_by_name))
