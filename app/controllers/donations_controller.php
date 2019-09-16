@@ -545,7 +545,7 @@ class Donations_controller extends MY_Controller
 				$attachments = array();
 
 			} else { //only attach if no errors
-				$email = text::get('email_individual_donation_success', [$donation->donor_org, $donation->donor_city, $donation->donor_state]);
+				$email = text::get('email_individual_donation_success', [$donation->donor_org, str_replace(" ","-",$donation->donor_city), $donation->donor_state]);
 				$attachments = array('label/'.$label_and_thanks_file, 'label/'.$manifest_file);
 
 			}

@@ -395,6 +395,9 @@ class donation extends MY_Model
 
 		$donations = $this->db->query($query);
 
+		//print_r($donations);
+		//return;
+
 
 		log::info("Tracking donations 3 ".$this->db->last_query());
 
