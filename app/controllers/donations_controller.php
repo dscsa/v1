@@ -202,7 +202,6 @@ class Donations_controller extends MY_Controller
 		if(valid::submit('Get Errors')){
 				ob_clean();
 				force_download("tmp_import_errors.csv",file_get_contents($filepath)); //use helper function
-
 		}
 
 		//Show all, i.e. don't filter results based on this new ndc
