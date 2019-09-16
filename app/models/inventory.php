@@ -456,6 +456,7 @@ class inventory extends MY_Model
 			}
 		}
 
+		//Test commit line
 		//If the NDC has mutiple matches in our DB then something is wrong!
 		//try to do a name match
 		if ((count($items) > 1) AND (!$looked_up_by_name))
@@ -766,8 +767,10 @@ class inventory extends MY_Model
 		$url = array_key_exists('url', self::$bulk) ? $data[self::$bulk['url']] : "";
 		$exact_ndc = array_key_exists('exact_ndc', self::$bulk) ? $data[self::$bulk['exact_ndc']] : "";
 
+		$ndc = strlen($ndc) > 0 ? (self::isPharmerica() ? substr($ndc, 0, -2) : $ndc) : "";  //for pharmerica, cut off last, then pad as per Allisons catch in September 2019
 		$ndc = strlen($ndc) > 0 ? str_pad($ndc, 9, '0', STR_PAD_LEFT) : "";
 		$exact_ndc = strlen($exact_ndc) > 0 ? str_pad($exact_ndc, 9, '0', STR_PAD_LEFT) : ""; //need to pad leading zeroes bc of spreadsheet issues
+		$exp = array_key_exists('exp', self::$bulk) ? $data[self::$bulk['exp']] : "";
 
 
 		//v2 shipment._id is in <10 digit recipient phone>.JSON Date.<10 digit donor phone>
@@ -788,7 +791,7 @@ class inventory extends MY_Model
 			$donee_phone = '('.substr($donee_phone, 0, 3).') '.substr($donee_phone, 3, 3).'-'.substr($donee_phone, 6, 4);
 
 			//extract data in variables
-			$exp = $data[self::$bulk['exp']];
+			//$exp = $data[self::$bulk['exp']];
 			$archived = array_key_exists('verified', self::$bulk) ?  $data[self::$bulk['verified']] : "";
 		}
 
