@@ -124,9 +124,12 @@ class admin extends MY_Model
 	function import($data,$row)
 	{
 			if($row > 1){
-
+				
 				list($donor_name, $donee_name, $num_labels,$attn) = $data; //get variables, force user to use three columns in order
-
+				
+				$donor_name = str_replace("'","''",$donor_name);//need to escape single quotes so that the sql query can run
+				$donee_name = str_replace("'","''",$donee_name);//same
+				
 				$donor_obj = org::search(['org.name' => $donor_name]);
 				if(count($donor_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donor name doesn't match V1"]);
