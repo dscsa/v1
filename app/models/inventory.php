@@ -408,10 +408,15 @@ class inventory extends MY_Model
 	function processPharmericaColumns($data,$row){
 		if($row == 2){
 			$raw_date = $data[0];
-			preg_match('/ ([0-9]{2})\//',$raw_date,$m);
-			$raw_month = substr($m[0], 1, 2);
+			preg_match('/ ([0-9]{2})\/[0-9]{2}\/([0-9]{4})/',$raw_date,$m);
+			$raw_month = $m[1];
 			$word_month = self::translate_num_to_month($raw_month);
-			$year = date("Y"); //TODO: Use the date in the sheet, otherwise causes december-of-future error
+		$year = $m[2];
+			//echo $word_month;
+			//echo $year;
+			//flush();
+		
+			//TODO check that $word_month and $year are properly being caught
 			self::$bulk['pharmericaMonth'] =  $word_month.'_'.$year;
 			self::$bulk['shippedHolder'] = date::format($raw_month.'/01/'.$year.' 10:00:00', DB_DATE_FORMAT);
 		} else if($row == 6){
@@ -767,6 +772,7 @@ class inventory extends MY_Model
 		$url = array_key_exists('url', self::$bulk) ? $data[self::$bulk['url']] : "";
 		$exact_ndc = array_key_exists('exact_ndc', self::$bulk) ? $data[self::$bulk['exact_ndc']] : "";
 
+		//TODO: try and test if you can remove the isPharmerica check here
 		$ndc = strlen($ndc) > 0 ? (self::isPharmerica() ? substr($ndc, 0, -2) : $ndc) : "";  //for pharmerica, cut off last, then pad as per Allisons catch in September 2019
 		$ndc = strlen($ndc) > 0 ? str_pad($ndc, 9, '0', STR_PAD_LEFT) : "";
 		$exact_ndc = strlen($exact_ndc) > 0 ? str_pad($exact_ndc, 9, '0', STR_PAD_LEFT) : ""; //need to pad leading zeroes bc of spreadsheet issues
