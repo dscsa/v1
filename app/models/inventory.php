@@ -411,11 +411,11 @@ class inventory extends MY_Model
 			preg_match('/ ([0-9]{2})\/[0-9]{2}\/([0-9]{4})/',$raw_date,$m);
 			$raw_month = $m[1];
 			$word_month = self::translate_num_to_month($raw_month);
-		$year = $m[2];
+			$year = $m[2];
 			//echo $word_month;
 			//echo $year;
 			//flush();
-		
+
 			//TODO check that $word_month and $year are properly being caught
 			self::$bulk['pharmericaMonth'] =  $word_month.'_'.$year;
 			self::$bulk['shippedHolder'] = date::format($raw_month.'/01/'.$year.' 10:00:00', DB_DATE_FORMAT);
@@ -548,7 +548,7 @@ class inventory extends MY_Model
 			$archived_date = date::format($archived, DB_DATE_FORMAT);
 		}
 
-		$donor_qty = self::isV2() ? NULL : $qty;
+		$donor_qty = $qty; //on 2/10/20 making this changed, per GW request  //self::isV2() ? NULL : $qty;
 		$donee_qty = self::isV2() ? $qty : NULL;
 
 		//Ok Item should have exactly one drug and one donation/shipment at this point so we should be able to add
