@@ -47,8 +47,8 @@ class Bkg_controller extends MY_Controller
 	{
 		//Typically run at the beginning of every hour
 		//but can change this within crontab on server
-		$curr_hour = intval(gmdate('H'));
-		if(($curr_hour < 4) || ($curr_hour > 10)){ //do not check during 4am-10am GMT (9pm-3am PT, 12am-6am ET)
+		$hour = intval(gmdate('H'));
+		if(($hour < 6) || ($hour > 9)){ //do not check during 6am-9am GMT (9pm-3am PT, 12am-6am ET)
 			log::info('CRON - Track');
 			bkg::donation('track');
 		}
