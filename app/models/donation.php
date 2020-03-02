@@ -108,13 +108,29 @@ class donation extends MY_Model
 	{
 
 			preg_match('/([0-9]{15})/',$tracking_num,$m);
+
 			if(count($m) == 0){
+
 				echo "Error: No tracking number provided";
+
 			} else {
+
 				$query = "SELECT *  FROM `donation` WHERE `tracking_number` = '$tracking_num'";
+
 				$donations = $this->db->query($query);
-				echo json_encode($donations->result());
+
+				$track = fedex::track($tracking_num);
+
+				//echo json_encode($track);
+
+				$res = array(
+					'db_data' => $donations->result(),
+					'fedex_data' => $track
+				);
+
+				echo json_encode($res);
 			}
+
 			flush();
 	}
 
