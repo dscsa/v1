@@ -374,6 +374,10 @@ class defaults
 			'Virginia' =>
 			[
 				1150 => 'Pharmacy'
+			],
+			'North Carolina' =>
+			[
+				1290 => 'Pharmacy'
 			]
 		);
 
