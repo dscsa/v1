@@ -438,9 +438,27 @@ class inventory extends MY_Model
 			if(count($items) == 0){
 				$quasi_exact_lookup = true;
 				$exact_ndc = substr($exact_ndc, 0, -2); //if no match, try removing last two digits. if multiple matches, this will go into the name match below (~450)
+				$exact_ndc = str_pad($exact_ndc, 9, '0', STR_PAD_LEFT);
 				$items = item::search(['upc' => $exact_ndc]);
+			} else if (count($items) > 1)	{
+						//For colorado exact ndc's, if we've got multiple matches, do a name match
+						$name_trim = str_replace(",","",trim($name));
+						$name_match = false;
+						foreach($items as $item) {
+							if((strlen($exact_ndc) > 0) AND ((strpos(str_replace(",","",$item->name),$name_trim) !== false) OR (strpos(str_replace(",","",$item->description),$name_trim) !== false))){ //check if we match the generic or brand name
+								$items = array();
+								$items[] = $item; //so items will be back to one length
+								$name_match = true;
+							}
+						}
 			}
-		} else {
+		}
+
+		//so either exact_ndc didn't work, so try this, or you're just using regular ndc
+		if(count($items) == 0){
+
+			$quasi_exact_lookup = false; //in case you tried it for exact_ndc and failed
+
 			if(strlen($ndc) > 0){ //if not required, use the regular ndc field, which for coleman is going to match, for everyone else, it may or may not match
 				$items = item::search(['upc' => $ndc]);
 			}
@@ -457,23 +475,6 @@ class inventory extends MY_Model
 				$looked_up_by_name = true;
 				if(count($temp_items->result()) > 0){
 					$items[] = $temp_items->result()[0];
-				}
-			}
-		}
-
-		//Test commit line
-		//If the NDC has mutiple matches in our DB then something is wrong!
-		//try to do a name match
-		if ((count($items) > 1) AND (!$looked_up_by_name))
-		{
-			//For colorado exact ndc's, if we've got multiple matches, do a name match
-			$name_trim = str_replace(",","",trim($name));
-			$name_match = false;
-			foreach($items as $item) {
-				if((strlen($exact_ndc) > 0) AND ((strpos(str_replace(",","",$item->name),$name_trim) !== false) OR (strpos(str_replace(",","",$item->description),$name_trim) !== false))){ //check if we match the generic or brand name
-					$items = array();
-					$items[] = $item; //so items will be back to one length
-					$name_match = true;
 				}
 			}
 		}
@@ -680,6 +681,15 @@ class inventory extends MY_Model
 		}
 
 
+	function donationCSVListener(){
+		$file=dirname(__FILE__).'/../'.file::path('upload', "Donations.csv", "r");
+		$csv= file_get_contents($file);
+		$array = array_map("str_getcsv", explode("\n", $csv));
+		$json = json_encode($array);
+		print_r($json);
+		flush();
+	}
+
 	//Function that gets pinged by a GSheet WebApp, and given two urls
 	//url_a will point to a source of some batches of data to import. We send a GET request to that link and parse the JSON there
 	//url_b will be listening for a POST request with relavant results after we complete the import
@@ -715,6 +725,7 @@ class inventory extends MY_Model
 		curl_close($ch);
 
 	}
+
 	//Called from an individual donation's page, allows for import
 	//to run without saving items, so that it can be handled by controller w/o searching for
 	//donation. Especially useful for dealing with duplicate tracking numbers issue
