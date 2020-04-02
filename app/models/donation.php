@@ -119,9 +119,7 @@ class donation extends MY_Model
 
 				$donations = $this->db->query($query);
 
-				$track = fedex::track($tracking_num);
-
-				//echo json_encode($track);
+				$track = fedex::track($tracking_num); //pulled directly form the fedex library, will have address
 
 				$res = array(
 					'db_data' => $donations->result(),
@@ -449,6 +447,8 @@ class donation extends MY_Model
 			log::info("About to call FedEx track on: ".$donation->tracking_number);
 
 			$track = fedex::track($donation->tracking_number);
+
+			if(array_key_exists('address', $track)) unset($track['address']);//remoce rhe address property from track, otherwise _update will bug out
 
 			log::info("Fedex:Track returned ".print_r($track, true));
 
