@@ -106,9 +106,9 @@ class Donations_controller extends MY_Controller
 | clinic, donor, item as described, communication, and shipping
 | @param int score, five star rating left by user for the category listed above
 */
-
 	function about($donation_id)
 	{
+
 		user::login($org_id);
 
 		$items = data::post('items');
@@ -544,15 +544,22 @@ class Donations_controller extends MY_Controller
 				$attachments = array();
 
 			} else { //only attach if no errors
-				
+
 				$email = text::get('email_individual_donation_success', [$donation->donor_org, str_replace(" ","-",$donation->donor_city), $donation->donor_state]);
-				$attachments = array('label/'.$label_and_thanks_file, 'label/'.$manifest_file);
+				$attachments = array($label_and_thanks_file, $manifest_file);
 
 			}
 
-			$view = $this->load->view('common/email', ['body' => $email[1], 'user' => $donation->donor_org], true);
+			$email_body = $this->load->view('common/email', ['body' => $email[1], 'user' => $donation->donor_org], true);
+			//If there's an error in the integration, this is the backup generic email that will be sent
+			$error_email = text::get('email_individual_donation_failure'); //this is not the debug email, but the backup email to send to individual if there's error in this integration
+			$error_subject = $error_email[0];
+			$error_body = $this->load->view('common/email', ['body' => $error_email[1], 'user' => $donation->donor_org], true);
+			$success_event_title = 'V1 Individual Donation Email: '.$donation->donor_org;
+			$failure_event_title = 'ERROR V1 Individual Donation Email: '.$donation->donor_org;
 
-			admin::email($email[0],$view, $donation->donor_email,$attachments);
+			//admin::email_through_comm_cal(success_event_title, subject, email_address, email_body, filenames_to_attach, failure_event_title, error_subject, error_body);
+			admin::email_through_comm_cal($success_event_title, $email[0], $donation->donor_email, $email_body, $attachments, $failure_event_title, $error_subject, $error_body);
 
 		}
 
