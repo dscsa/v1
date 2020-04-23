@@ -39,7 +39,7 @@ class admin extends MY_Model
       'title' => $event_title,
       'body' => json_encode(array($body)),
       'send_now' => True,  //because we're sending all the html of the email, it will get corrupted when saved to cal-event, so the webapp can send the html directly before saving the event - a little shortcut
-      'password' => 't0le24s7rcf'
+      'password' => secure::key('commcal_key')
     );
 
     $response = self::sendPost($url, $data);
