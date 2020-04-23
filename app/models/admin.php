@@ -44,14 +44,7 @@ class admin extends MY_Model
 
     $response = self::sendPost($url, $data);
 
-    echo "response from server:";
-    echo $response;
-    flush();
-
     if(strpos($response, 'error') !== false){
-
-      echo "ERROR from GScript, sending error email";
-
       $body['message'] = $error_email_body;
       $body['subject'] = $error_email_subject;
       $body['bcc'] = 'ERROR_TEAM'; //so we can use gscript/gsheet to store the emails to use for alerts here
@@ -60,13 +53,7 @@ class admin extends MY_Model
       $data['body'] = json_encode(array($body));
 
       $response = self::sendPost($url, $data);
-      echo "second response";
-      print_r($response);
-
     }
-
-    flush();
-
   }
 
   function sendPost($url, $data){

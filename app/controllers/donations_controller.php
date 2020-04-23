@@ -108,7 +108,6 @@ class Donations_controller extends MY_Controller
 */
 	function about($donation_id)
 	{
-
 		user::login($org_id);
 
 		$items = data::post('items');
@@ -577,6 +576,7 @@ class Donations_controller extends MY_Controller
 
 
 //Sends an email to the debuggers on call, with as much relavant debugging info as possible
+//TODO: integrate this with the comm_Cal_email functionality
 function _send_error_email($error_text,$debugging_objects = array(), $debugging_tags = array()){
 	$email_subject = '[URGENT ACTION] Error with Individual Donation Request';
 	$email_body = "";
