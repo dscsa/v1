@@ -102,6 +102,19 @@ class donation extends MY_Model
 		}
 	}
 
+	//Called in the two step communication with the comm-calendar
+	function pullLabelBlob($label_name)
+	{
+		try{
+			$file_contents = file_get_contents('label/'.urldecode($label_name));
+			echo base64_encode($file_contents);
+			flush();
+		}catch(Exception $e){
+			echo "Error:";
+			echo json_encode($e);
+			flush();
+		}
+	}
 
 	//Given a fifteen-digit format, return info for a given donation if exists
 	function pullTrackingInfo($tracking_num)
