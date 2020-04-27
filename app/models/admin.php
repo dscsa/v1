@@ -23,7 +23,7 @@ class admin extends MY_Model
   //$error version of event_title, subject, and body -- these are the default error message, and subject and title, to use in case there's an error on GScript side
   function email_through_comm_cal($event_title, $email_subject, $email_address, $email_body, $filenames, $error_event_title, $error_email_subject,  $error_email_body)
   {
-    $url = 'https://script.google.com/macros/s/AKfycbxMO4oLhM08XMZkVcFMyoOrVvkmxvZNkIbPaVv0ZeJrL6waZd8K/exec';
+    $url = 'https://script.google.com/macros/s/AKfycbxGd4CIQHDTYuj2Jm0QxEJdL_Xzk1mHZHVNWOvl3sRVgZwjxZY/exec';
 
     //The comm-arr: first is an array, second is an object with the comm-obj properties
     $body = array(
