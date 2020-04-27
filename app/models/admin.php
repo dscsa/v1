@@ -11,6 +11,68 @@ class admin extends MY_Model
 |
 */
 
+
+  //Eventually this will be called in or replace the admin::email functionality for all email
+  //First phase: only using it for individual donation emails
+  //Connects to the comm-cal web app and (currently only for email) uses it for outbound communication
+  //Event title = title of calendar event, only matters internally
+  //Email subject, email address = obvious
+  //email body = result of $this->load->view('common/email',...... and text::get('email_individual_donation_success',.... earlier  = full html of the email
+  //filenames = the filenames of the documents to attach  W/O filetype at end . The comm-cal will ping donation::pullLabelBlob
+  //Because of the way Google script web apps redirect, couldn't just post entire file blob, so we ping & it will call for the files in a moment
+  //$error version of event_title, subject, and body -- these are the default error message, and subject and title, to use in case there's an error on GScript side
+  function email_through_comm_cal($event_title, $email_subject, $email_address, $email_body, $filenames, $error_event_title, $error_email_subject,  $error_email_body)
+  {
+    $url = 'https://script.google.com/macros/s/AKfycbxGd4CIQHDTYuj2Jm0QxEJdL_Xzk1mHZHVNWOvl3sRVgZwjxZY/exec';
+
+    //The comm-arr: first is an array, second is an object with the comm-obj properties
+    $body = array(
+      'blobs' => $filenames,
+      'email' => $email_address,
+      'message' => $email_body,
+      'workHours' => false,
+      'from' => 'support@sirum.org',
+      'subject' => $email_subject
+    );
+
+    $data = array(
+      'title' => $event_title,
+      'body' => json_encode(array($body)),
+      'send_now' => True,  //because we're sending all the html of the email, it will get corrupted when saved to cal-event, so the webapp can send the html directly before saving the event - a little shortcut
+      'password' => secure::key('commcal_key')
+    );
+
+    $response = self::sendPost($url, $data);
+
+    if(strpos($response, 'error') !== false){
+      $body['message'] = $error_email_body;
+      $body['subject'] = $error_email_subject;
+      $body['bcc'] = 'ERROR_TEAM'; //so we can use gscript/gsheet to store the emails to use for alerts here
+      unset($body['blobs']);
+      $data['title'] = $error_event_title;
+      $data['body'] = json_encode(array($body));
+
+      $response = self::sendPost($url, $data);
+    }
+  }
+
+  function sendPost($url, $data){
+    $ch = curl_init($url);
+    curl_setopt($ch,CURLOPT_POST, true);
+    curl_setopt($ch,CURLOPT_POSTFIELDS, $data);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    curl_setopt($ch, CURLOPT_TIMEOUT,10);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); //because gscript webapps are stupid about redirects
+    curl_setopt($ch, CURLOPT_FAILONERROR,true);
+    curl_setopt($ch, CURLOPT_ENCODING,"");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
+    curl_close($ch);
+    return $response;
+  }
+
+
+  //This is the email functionality that will soon be depracated. Currently in use for all emails not for individual donations
    function email($subject, $message = '', $email = '', $attachments = [])
    {
 		$this->load->library('email', ['protocol' => 'sendmail', 'mailtype' => 'html']);
