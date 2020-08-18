@@ -290,6 +290,10 @@ class defaults
 			'North Carolina' =>
 			[
 				290 => 'Pharmacy'
+			],
+			'Wyoming' =>
+			[
+				300 => 'Pharmacy'
 			]
 		);
 
