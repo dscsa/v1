@@ -461,9 +461,9 @@ class donation extends MY_Model
 
 			$track = fedex::track($donation->tracking_number);
 
-			unset($track['success']['address']);//remoce rhe address property from track, otherwise _update will bug out
-
 			log::info("Fedex:Track returned ".print_r($track, true));
+
+			unset($track['success']['address']);//remoce rhe address property from track, otherwise _update will bug out
 
 			$email = [$donation->donor_org, $donation->donation_id, $donation->fedex()];
 
@@ -510,8 +510,10 @@ class donation extends MY_Model
 
 				log::info("Sending shipped email to $org_id for ".$donation->fedex());
 
+				admin::email('Debug Erroneous Shipped Emails', print_r($donation, true)." ".print_r($track, true)." ".print_r($donations, true));
+
 				org::email($org_id, 'email_shipped', $email);
-				
+
 				self::_update($track['success'], $donation->donation_id);
 			}
 
