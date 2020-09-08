@@ -521,9 +521,11 @@ class Donations_controller extends MY_Controller
 	function individual_donation(){
 
 			try{
-				$raw_data = (json_decode(urldecode(file_get_contents('php://input'))));
+				$raw_data = json_decode(urldecode(file_get_contents('php://input')));
+				admin::email("v1 Individual_Donation called by Cognito Forms". print_r($raw_data, true));
 			}catch(Exception $e){ //with this error, we can't even email them
-				self::_send_error_email($e);
+				admin::email("Individual_Donation Error reading input". print_r($e, true));
+				self::_send_error_email("Individual_Donation Error reading input", ['exception' => $e]);
 				return;
 			}
 
