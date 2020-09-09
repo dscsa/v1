@@ -543,6 +543,9 @@ class Donations_controller extends MY_Controller
 				if(strpos($label_and_thanks_file, '.pdf') === false) $error_text .= $label_and_thanks_file.'      ';
 				if(strpos($manifest_file, '.pdf') === false) $error_text .= $manifest_file;
 
+				log::info("Individual_Donation Error Creating File" . print_r([$error_text, $label_and_thanks_file, $manifest_file, $donation], true));
+				admin::email("Individual_Donation Error Creating File", print_r([$error_text, $label_and_thanks_file, $manifest_file, $donation], true));
+
 				$email = self::_send_error_email($error_text,array($raw_data,$donation), array('Raw JSON', 'Donation Object'));	//send email to debug team with full error message so we can manually create, while debugging whatever went wrong
 				$attachments = array();
 
