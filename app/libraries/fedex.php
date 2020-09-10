@@ -523,7 +523,7 @@ SP-Split status
 			case 'AR':
 				//shiptimestamp is sometimes the order created (OC) date so use explicit pickup time instead. Because we query different timespans throughout day, catch multiple transit codes as 'shipped'.
 				//The donation model code won't repeat any work once DB has a non-null date_shipped (and won't overwrite the original shipped timestamp). this is just a wider net
-				log::error(('Full FedEx Response for Shipped Donation '. print_r($response, true));
+				log::error('Full FedEx Response for Shipped Donation '. print_r($response, true));
 				return self::_return('success', ['date_shipped' => date::format($response['success']->TrackDetails->Events->Timestamp, DB_DATE_FORMAT), 'address' => $response['success']->TrackDetails->Events->Address]);
 			case 'OC':
 				return self::_return('success', ['order_created' => null]);

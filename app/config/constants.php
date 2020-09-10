@@ -43,7 +43,7 @@ define('FOPEN_READ_WRITE_CREATE_STRICT',		'x+b');
 |
 |
 */
-define('EMAIL', 'donations@sirum.org');
+define('EMAIL', 'support@sirum.org');
 define('SALESFORCE', 'emailtosalesforce@2qy8hlcx76pomamu16f62wl1y1awt2mjc9ba9norwl7s0xe7na.g-gk8zmae.g.le.salesforce.com');
 define('ADDRESS', '3000 El Camino Real, BLDG 4 STE 200, Palo Alto, CA 94306');
 define('PHONE', '(650) 488-7434');
