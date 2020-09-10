@@ -510,7 +510,7 @@ class donation extends MY_Model
 
 				log::info("Sending shipped email to $org_id for ".$donation->fedex());
 
-				admin::email('Debug Erroneous Shipped Emails', print_r($donation, true)." ".print_r($track, true)." ".print_r($donations, true));
+				admin::email('Debug Erroneous Shipped Emails', print_r($donation, true)." ".print_r($track, true));
 
 				org::email($org_id, 'email_shipped', $email);
 
