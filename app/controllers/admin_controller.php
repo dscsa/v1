@@ -5,21 +5,23 @@ class Admin_controller extends MY_Controller
 
 function comm_cal_email($email_subject = '(No Subject)', $email_body = '(No Message)', $email_address = '') {
 
-	log::info("admin::comm_cal_email controller start $email_subject $email_body $email_address");
-
-	if ($email_address) $email_address .= '@sirum.org';
-
 	try {
-		$response = admin::comm_cal_email($email_subject, $email_body, $email_address);
-	} catch (Exception $e) {
-		log::error("admin::comm_cal_email controller ERROR ".print_r($e, true));
-	}
 
-	$output = "admin::comm_cal_email controller::".print_r($response, true);
+		if ($email_address) $email_address .= '@sirum.org';
+
+		log::info("admin::comm_cal_email controller start $email_subject $email_body $email_address");
+
+		$response = admin::comm_cal_email($email_subject, $email_body, $email_address);
+
+		$output = "admin::comm_cal_email controller SUCCESS ".print_r($response, true);
+
+	} catch (Exception $e) {
+		$output = "admin::comm_cal_email controller ERROR ".print_r($e, true);
+	}
 
 	echo $output;
 
-	log::info("admin::comm_cal_email controller end $output");
+	log::info($output);
 }
 
 /**
