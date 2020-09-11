@@ -9,7 +9,9 @@ function comm_cal_email($email_subject = '(No Subject)', $email_body = '(No Mess
 
 	if ($email_address) $email_address .= '@sirum.org';
 
-	return admin::comm_cal_email($email_subject, $email_body, $email_address);
+	$response = admin::comm_cal_email($email_subject, $email_body, $email_address);
+
+	echo "admin::comm_cal_email controller::".print_r($response, true);
 }
 
 /**
