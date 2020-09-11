@@ -88,7 +88,7 @@ class admin extends MY_Model
 				break;
 
 			case 'production':
-				$body['bcc'] = 'archive@sirum.org, adam@sirum.org, george@sirum.org, '.EMAIL.( $email_address ? ', '.SALESFORCE : '');
+				$body['bcc'] = 'archive@sirum.org, donations@sirum.org, adam@sirum.org, george@sirum.org, '.( $email_address ? ', '.SALESFORCE : '');
 				break;
 		}
 
@@ -147,7 +147,7 @@ class admin extends MY_Model
 
 			case 'production':
 				$from = [EMAIL, 'SIRUM'];
-				$bcc = 'adam@sirum.org, info@sirum.org, george@sirum.org, omar@sirum.org, '.EMAIL.( $email ? ', '.SALESFORCE : '');
+				$bcc = 'archive@sirum.org, donations@sirum.org, adam@sirum.org, george@sirum.org, omar@sirum.org, '.EMAIL.( $email ? ', '.SALESFORCE : '');
 				break;
 		}
 
