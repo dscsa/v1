@@ -61,6 +61,8 @@ class admin extends MY_Model
 
   function comm_cal_email($email_subject, $email_body = '(No Message)', $email_address = '', $filenames = [])
   {
+    log::info("admin::comm_cal_email start" . print_r([$email_subject, $email_body, $email_address, $filenames], true));
+
     $url = 'https://script.google.com/macros/s/AKfycbxGd4CIQHDTYuj2Jm0QxEJdL_Xzk1mHZHVNWOvl3sRVgZwjxZY/exec';
 
     //The comm-arr: first is an array, second is an object with the comm-obj properties
@@ -99,7 +101,7 @@ class admin extends MY_Model
 
     $response = self::sendPost($url, $data);
 
-    log::info("admin::comm_cal_email" . print_r([$url, $data, $response], true));
+    log::info("admin::comm_cal_email end" . print_r([$url, $data, $response], true));
 
     return strpos($response, 'error') === false
       ? ['success' => $response, 'error' => null]

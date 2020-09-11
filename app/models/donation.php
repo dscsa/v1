@@ -457,11 +457,11 @@ class donation extends MY_Model
 					$donation->$key = $value;
 			}
 
-			log::info("About to call FedEx track on: ".$donation->tracking_number);
+			//log::info("About to call FedEx track on: ".$donation->tracking_number);
 
 			$track = fedex::track($donation->tracking_number);
 
-			log::info("Fedex:Track returned ".print_r($track, true));
+			//log::info("Fedex:Track returned ".print_r($track, true));
 
 			unset($track['success']['address']);//remoce rhe address property from track, otherwise _update will bug out
 

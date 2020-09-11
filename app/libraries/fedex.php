@@ -504,7 +504,7 @@ PD-Pickup Delay
 SP-Split status
  */
 
- 		log::error('Full FedEx Response for All Donations '.print_r($response, true));
+ 		//log::error('Full FedEx Response for All Donations '.print_r($response, true));
 
 		switch($response['success']->TrackDetails->Events->EventType)
 		{
