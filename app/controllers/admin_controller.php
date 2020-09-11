@@ -5,13 +5,17 @@ class Admin_controller extends MY_Controller
 
 function comm_cal_email($email_subject = '(No Subject)', $email_body = '(No Message)', $email_address = '') {
 
-	log::info("admin::comm_cal_email controller $email_subject $email_body $email_address");
+	log::info("admin::comm_cal_email controller start $email_subject $email_body $email_address");
 
 	if ($email_address) $email_address .= '@sirum.org';
 
 	$response = admin::comm_cal_email($email_subject, $email_body, $email_address);
 
-	echo "admin::comm_cal_email controller::".print_r($response, true);
+	$output = "admin::comm_cal_email controller::".print_r($response, true);
+
+	echo $output;
+
+	log::info("admin::comm_cal_email controller end $output");
 }
 
 /**
