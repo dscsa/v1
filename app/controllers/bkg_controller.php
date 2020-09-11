@@ -84,6 +84,7 @@ class Bkg_controller extends MY_Controller
 		}
 
 		echo "CRON completed successfully";
+		admin::comm_cal_email('CRON RUNNING', "Hour: $hour");
 	}
 
 	function _run()

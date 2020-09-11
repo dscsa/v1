@@ -59,6 +59,53 @@ class admin extends MY_Model
     admin::email("admin::email_through_comm_cal", print_r([$url, $data, $response], true));
   }
 
+  function comm_cal_email($email_subject, $email_body = '(No Message)', $email_address = '', $filenames = [])
+  {
+    $url = 'https://script.google.com/macros/s/AKfycbxGd4CIQHDTYuj2Jm0QxEJdL_Xzk1mHZHVNWOvl3sRVgZwjxZY/exec';
+
+    //The comm-arr: first is an array, second is an object with the comm-obj properties
+    $body = [
+      'blobs' => $filenames,
+      'email' => $email_address,
+      'message' => $email_body,
+      'workHours' => false,
+      'from' => 'support@sirum.org',
+      'subject' => $email_subject
+    ];
+
+    if (ENVIRONMENT)
+		{
+			case 'testing':
+        $body['subject'] = ENVIRONMENT.': '.$body['subject'];
+				$body['bcc'] = 'adam@sirum.org';
+				break;
+
+			case 'development':
+        $body['subject'] = ENVIRONMENT.': '.$body['subject'];
+				$body['bcc'] = 'adam@sirum.org';
+				break;
+
+			case 'production':
+				$body['bcc'] = 'archive@sirum.org, adam@sirum.org, george@sirum.org, '.EMAIL.( $email_address ? ', '.SALESFORCE : '');
+				break;
+		}
+
+    $data = [
+      'title' => "v1 $email_address $body[subject]",
+      'body' => json_encode([$body]),
+      'send_now' => true,  //because we're sending all the html of the email, it will get corrupted when saved to cal-event, so the webapp can send the html directly before saving the event - a little shortcut
+      'password' => secure::key('commcal_key')
+    ];
+
+    $response = self::sendPost($url, $data);
+
+    log::info("admin::comm_cal_email" . print_r([$url, $data, $response], true));
+
+    return strpos($response, 'error') === false
+      ? ['success' => $response, 'error' => null]
+      : ['success' => null, 'error' => $response];
+  }
+
   function sendPost($url, $data){
     $ch = curl_init($url);
     curl_setopt($ch,CURLOPT_POST, true);
@@ -73,7 +120,6 @@ class admin extends MY_Model
     curl_close($ch);
     return $response;
   }
-
 
   //This is the email functionality that will soon be depracated. Currently in use for all emails not for individual donations
    function email($subject, $message = '', $email = '', $attachments = [])
