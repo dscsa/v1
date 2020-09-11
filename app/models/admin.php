@@ -61,7 +61,7 @@ class admin extends MY_Model
 
   function comm_cal_email($email_subject, $email_body = '(No Message)', $email_address = '', $filepaths = [])
   {
-    log::info("admin::comm_cal_email start" . print_r([$email_subject, $email_body, $email_address, $filenames], true));
+    log::info("admin::comm_cal_email start" . print_r([$email_subject, $email_body, $email_address, $filepaths], true));
 
     $url = 'https://script.google.com/macros/s/AKfycbxGd4CIQHDTYuj2Jm0QxEJdL_Xzk1mHZHVNWOvl3sRVgZwjxZY/exec';
 
@@ -136,9 +136,12 @@ class admin extends MY_Model
   //TODO make this safer with file path validation
   function get_file($file_path)
   {
+
+    log::info("admin::get_file raw:" . $file_path . " urldecode:" . urldecode($file_path));
+
     try{
       $file_path = urldecode($file_path);
-      $file_contents = file_get_contents();
+      $file_contents = file_get_contents($file_path);
       echo base64_encode($file_contents);
       flush();
     } catch(Exception $e) {
