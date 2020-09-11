@@ -137,7 +137,9 @@ class admin extends MY_Model
   function get_file($file_path)
   {
 
-    log::info("admin::get_file raw:" . $file_path . " urldecode:" . urldecode($file_path));
+    $params = $this->uri->uri_to_assoc(3, null);
+
+    log::info("admin::get_file raw:" . $file_path . " urldecode:" . urldecode($file_path) . " " . print_r($params, true));
 
     try{
       $file_path = urldecode($file_path);
