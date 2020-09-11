@@ -138,7 +138,8 @@ class admin extends MY_Model
 
     //Since file_path may have / in them (even when urlencoded) CI will interpret this as separate parameters
     $file_path = implode("/", func_get_args());
-
+    $file_path = rtrim($file_path, "/"); //bkg adds a last parameter which creates a trailing /
+    
     log::info("admin::get_file url-based file_path: " . $file_path);
 
     try{
