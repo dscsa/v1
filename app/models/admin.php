@@ -75,7 +75,7 @@ class admin extends MY_Model
       'subject' => $email_subject
     ];
 
-    if (ENVIRONMENT)
+    switch (ENVIRONMENT)
 		{
 			case 'testing':
         $body['subject'] = ENVIRONMENT.': '.$body['subject'];
