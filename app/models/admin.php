@@ -88,7 +88,7 @@ class admin extends MY_Model
 				break;
 
 			case 'production':
-				$body['bcc'] = 'archive@sirum.org, donations@sirum.org, adam@sirum.org, george@sirum.org, '.( $email_address ? ', '.SALESFORCE : '');
+				$body['bcc'] = 'archive@sirum.org, donations@sirum.org, adam@sirum.org, george@sirum.org '.( $email_address ? ', '.SALESFORCE : '');
 				break;
 		}
 
