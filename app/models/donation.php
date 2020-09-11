@@ -103,6 +103,7 @@ class donation extends MY_Model
 	}
 
 	//Called in the two step communication with the comm-calendar
+	//DEPRECATE THIS IN FAVOR OF admin::get_file
 	function pullLabelBlob($label_name)
 	{
 		try{
@@ -115,6 +116,8 @@ class donation extends MY_Model
 			flush();
 		}
 	}
+
+
 
 	//Given a fifteen-digit format, return info for a given donation if exists
 	function pullTrackingInfo($tracking_num)

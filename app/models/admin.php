@@ -59,15 +59,23 @@ class admin extends MY_Model
     admin::email("admin::email_through_comm_cal", print_r([$url, $data, $response], true));
   }
 
-  function comm_cal_email($email_subject, $email_body = '(No Message)', $email_address = '', $filenames = [])
+  function comm_cal_email($email_subject, $email_body = '(No Message)', $email_address = '', $filepaths = [])
   {
     log::info("admin::comm_cal_email start" . print_r([$email_subject, $email_body, $email_address, $filenames], true));
 
     $url = 'https://script.google.com/macros/s/AKfycbxGd4CIQHDTYuj2Jm0QxEJdL_Xzk1mHZHVNWOvl3sRVgZwjxZY/exec';
 
+    //Want to make public URL folder is the base path so
+    //"/dscsa/sirum/url/label/D1364R1187T29162P_label.pdf" should be given as "label/D1364R1187T29162P_label.pdf"
+    foreach($filepaths as $i => $filepath) {
+      $api_key  = secure::key('cron');
+      $filepath = urlencode($filepath);
+      $filepaths[$i] = "https://donate.sirum.org/bkg/$api_key/admin/get_file/$filepath";
+    }
+
     //The comm-arr: first is an array, second is an object with the comm-obj properties
     $body = [
-      'blobs' => $filenames,
+      'blobs' => $filepaths,
       'email' => $email_address,
       'message' => $email_body,
       'workHours' => false,
@@ -123,6 +131,21 @@ class admin extends MY_Model
     $response = curl_exec($ch);
     curl_close($ch);
     return $response;
+  }
+
+  //TODO make this safer with file path validation
+  function get_file($file_path)
+  {
+    try{
+      $file_path = urldecode($file_path);
+      $file_contents = file_get_contents();
+      echo base64_encode($file_contents);
+      flush();
+    } catch(Exception $e) {
+      echo "Error:";
+      echo json_encode($e);
+      flush();
+    }
   }
 
   //This is the email functionality that will soon be depracated. Currently in use for all emails not for individual donations

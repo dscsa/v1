@@ -11,7 +11,7 @@ function comm_cal_email($email_subject = '(No Subject)', $email_body = '(No Mess
 
 		log::info("admin::comm_cal_email controller start $email_subject $email_body $email_address");
 
-		$response = admin::comm_cal_email($email_subject, $email_body, $email_address);
+		$response = admin::comm_cal_email($email_subject, $email_body, $email_address, ["label/D1364R1187T29162P_label.pdf"]);
 
 		$output = "admin::comm_cal_email controller SUCCESS ".print_r($response, true);
 
