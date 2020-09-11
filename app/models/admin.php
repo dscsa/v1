@@ -99,9 +99,11 @@ class admin extends MY_Model
       'password' => secure::key('commcal_key')
     ];
 
+    log::info("admin::comm_cal_email start" . print_r([$url, $data], true));
+
     $response = self::sendPost($url, $data);
 
-    log::info("admin::comm_cal_email end" . print_r([$url, $data, $response], true));
+    log::info("admin::comm_cal_email end" . print_r($response, true));
 
     return strpos($response, 'error') === false
       ? ['success' => $response, 'error' => null]
