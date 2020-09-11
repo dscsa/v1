@@ -69,7 +69,6 @@ class admin extends MY_Model
     //"/dscsa/sirum/url/label/D1364R1187T29162P_label.pdf" should be given as "label/D1364R1187T29162P_label.pdf"
     foreach($filepaths as $i => $filepath) {
       $api_key  = secure::key('cron');
-      $filepath = urlencode($filepath);
       $filepaths[$i] = "https://donate.sirum.org/bkg/$api_key/admin/get_file/$filepath";
     }
 
@@ -134,15 +133,16 @@ class admin extends MY_Model
   }
 
   //TODO make this safer with file path validation
-  function get_file($file_path)
+  function get_file()
   {
 
-    $params = $this->uri->uri_to_assoc(3, null);
+    //Since file_path may have / in them (even when urlencoded) CI will interpret this as separate parameters
+    $file_path = implode("/", func_get_args());
 
-    log::info("admin::get_file raw:" . $file_path . " urldecode:" . urldecode($file_path) . " " . print_r($params, true));
+    log::info("admin::get_file url-based file_path: " . $file_path);
 
     try{
-      $file_path = urldecode($file_path);
+
       $file_contents = file_get_contents($file_path);
       echo base64_encode($file_contents);
       flush();
