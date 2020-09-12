@@ -225,7 +225,7 @@ class admin extends MY_Model
 
 			->send();
 
-      self::comm_cal_email("test comm_cal_email to:$email $subject", $message, '', $attachments); //Testing without a specified email for now
+      self::comm_cal_email("test comm_cal_email to:$email $subject", $message, 'adam@sirum.org', $attachments); //Testing without a specified email for now
 	}
 
 /**
