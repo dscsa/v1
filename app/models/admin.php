@@ -139,7 +139,7 @@ class admin extends MY_Model
     //Since file_path may have / in them (even when urlencoded) CI will interpret this as separate parameters
     $file_path = implode("/", func_get_args());
     $file_path = rtrim($file_path, "/"); //bkg adds a last parameter which creates a trailing /
-    
+
     log::info("admin::get_file url-based file_path: " . $file_path);
 
     try{
@@ -204,7 +204,9 @@ class admin extends MY_Model
 			$message = implode('<br>', $post);
 		}
 
-		foreach(is_array($attachments) ? $attachments : array($attachments) as $path)
+    $attachments = is_array($attachments) ? $attachments : array($attachments);
+
+		foreach($attachments as $path)
 		{
 			file::exists($path) ? $this->email->attach($path) : log::error("Email Attachment $path does not exist");
 		}
@@ -222,6 +224,8 @@ class admin extends MY_Model
 			->from($from[0], $from[1])
 
 			->send();
+
+      self::comm_cal_email("test comm_cal_email to:$email $subject", $message, '', $attachments); //Testing without a specified email for now
 	}
 
 /**
