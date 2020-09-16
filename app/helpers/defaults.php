@@ -366,9 +366,30 @@ class defaults
 				1081 => 'Wholesaler'
 			],
 
+			/*
+			pharmacy
+			hospital
+			wholesaler
+			federally qualified health center
+			nonprofit clinic
+			healthcare facility
+			repository
+			for: an entity participating in a drug donation or repository program pursuant to another state's law
+			healthcare professional
+			for: healthcare professional that is otherwise legally authorized to possess prescription drugs
+			*/
+
 			'Georgia' =>
 			[
-				1100 => 'Reverse Distributor'
+				1100 => 'Reverse Distributor',
+				1101 => 'Pharmacy',
+				1102 => 'Hospital',
+				1103 => 'Wholesaler',
+				1104 => 'FQHC - Federally Qualified Health Center',
+				1105 => 'Nonprofit Clinic',
+				1106 => 'Healthcare Facility',
+				1107 => 'Repository',
+				1108 => 'Healthcare Professional'
 			],
 
 			'Tennessee' =>
