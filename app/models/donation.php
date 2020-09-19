@@ -468,7 +468,7 @@ class donation extends MY_Model
 
 			unset($track['success']['address']);//remoce rhe address property from track, otherwise _update will bug out
 
-			$email = [$donation->donor_org, $donation->donation_id, $donation->fedex()];
+			$email = [$donation->donor_org, $donation->donation_id, $donation->tracking_number];
 
 			//Skip if there was an error
 			if($track['error'])

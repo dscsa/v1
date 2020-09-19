@@ -59,7 +59,7 @@ $lang['email_received_no_items'] = array
 $lang['email_shipped'] = array
 (
 	'Donation Shipped',
-	html::link("donations/{1}", "Donation {1}")." with tracking number {2} from {0} was shipped"
+	"Donation {1} with tracking number {2} from {0} was shipped"
 );
 
 $lang['email_verified'] = array
