@@ -294,6 +294,10 @@ class defaults
 			'Wyoming' =>
 			[
 				300 => 'Pharmacy'
+			],
+			'Minnesota' =>
+			[
+				310 => 'Pharmacy'
 			]
 		);
 
@@ -403,6 +407,10 @@ class defaults
 			'North Carolina' =>
 			[
 				1290 => 'Pharmacy'
+			],
+			'Minnesota' =>
+			[
+				1310 => 'Pharmacy'
 			]
 		);
 
