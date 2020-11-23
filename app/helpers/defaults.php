@@ -126,12 +126,12 @@ class defaults
 				3	=> 'Hospital - chemical dependency recovery',
 				4	=> 'SNF - skilled nursing facility',
 				5	=> 'ICF - intermediate care facility',
-				6 => 'Correctional treatment center',
+				6   => 'Correctional treatment center',
 				7	=> 'Psychiatric health facility',
 				8	=> 'RCFE with 16 beds or more',
 				9	=> 'MHRC - mental health rehabilitation center',
-				10 => 'Pharmacy',
-				12 => 'Wholesaler'
+				10  => 'Pharmacy',
+				12  => 'Wholesaler'
 			],
 
 			//'California' =>
@@ -298,6 +298,90 @@ class defaults
 			'Minnesota' =>
 			[
 				310 => 'Pharmacy'
+			],
+            'Alabama' =>
+            [
+				320 => 'Pharmacy'
+			],
+            'Alaska' =>
+            [
+				330 => 'Pharmacy'
+			],
+            'Arkansas' =>
+            [
+				340 => 'Pharmacy'
+			],
+            'Connecticut' =>
+            [
+				350 => 'Pharmacy'
+			],
+            'Delaware' =>
+            [
+				360 => 'Pharmacy'
+			],
+            'Hawaii' =>
+            [
+				370 => 'Pharmacy'
+			],
+            'Kansas' =>
+            [
+				380 => 'Pharmacy'
+			],
+            'Louisiana' =>
+            [
+				390 => 'Pharmacy'
+			],
+            'Mississippi' =>
+            [
+				400 => 'Pharmacy'
+			],
+            'Montana' =>
+            [
+				410 => 'Pharmacy'
+			],
+            'Nevada' =>
+            [
+				420 => 'Pharmacy'
+			],
+            'New Jersey' =>
+            [
+				430 => 'Pharmacy'
+			],
+            'North Dakota' =>
+            [
+				440 => 'Pharmacy'
+			],
+            'Oklahoma' =>
+            [
+				450 => 'Pharmacy'
+			],
+            'Oregon' =>
+            [
+				460 => 'Pharmacy'
+			],
+            'Rhode Island' =>
+            [
+				470 => 'Pharmacy'
+			],
+            'South Dakota' =>
+            [
+				480 => 'Pharmacy'
+			],
+            'Utah' =>
+            [
+				490 => 'Pharmacy'
+			],
+            'Vermont' =>
+            [
+				500 => 'Pharmacy'
+			],
+            'West Virginia' =>
+            [
+				510 => 'Pharmacy'
+			],
+            'Wisconsin'  =>
+            [
+				520 => 'Pharmacy'
 			]
 		);
 
@@ -347,11 +431,11 @@ class defaults
 				1033 => "Practitioner that can dispense medication"
 			],
 
-			'Oregon' =>
-			[
-				1040 => 'Charitable pharmacy',
-				1041 => 'Clinic depot'
-			],
+			//'Oregon' =>
+			//[
+			//	1040 => 'Charitable pharmacy',
+			//	1041 => 'Clinic depot'
+			//],
 
 			'New Hampshire' =>
 			[
@@ -410,7 +494,8 @@ class defaults
 			],
 			'Minnesota' =>
 			[
-				1310 => 'Pharmacy'
+				1310 => 'Pharmacy',
+                1311 => 'Wholesaler'
 			]
 		);
 
