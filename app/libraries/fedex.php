@@ -434,6 +434,9 @@ class fedex extends MY_Library
 			return $response; //for validation purposes this array will evalutate to true
 		}
 
+        if ( ! isset($response['success']->TrackDetails))
+            log::error($response);
+
 		//Tracking numbers are not unique.  If more than one package matches a tracking number pick the last one
 		if (is_array($response['success']->TrackDetails))
 		{

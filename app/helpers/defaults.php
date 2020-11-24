@@ -431,11 +431,11 @@ class defaults
 				1033 => "Practitioner that can dispense medication"
 			],
 
-			//'Oregon' =>
-			//[
-			//	1040 => 'Charitable pharmacy',
-			//	1041 => 'Clinic depot'
-			//],
+			'Oregon' =>
+			[
+				1040 => 'Charitable pharmacy',
+				1041 => 'Clinic depot'
+			],
 
 			'New Hampshire' =>
 			[
