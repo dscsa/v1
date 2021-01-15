@@ -269,7 +269,8 @@ class defaults
 			],
 			'Tennessee' =>
 			[
-				240 => 'Pharmacy'
+				240 => 'Pharmacy',
+				241 => 'Wholesaler'
 			],
 			'Kentucky' =>
 			[
