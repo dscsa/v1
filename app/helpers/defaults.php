@@ -497,6 +497,10 @@ class defaults
 			[
 				1310 => 'Pharmacy',
                 1311 => 'Wholesaler'
+			],
+			'Alabama' =>
+            [
+				1320 => 'Pharmacy'
 			]
 		);
 
