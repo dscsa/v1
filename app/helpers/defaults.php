@@ -298,7 +298,10 @@ class defaults
 			],
 			'Minnesota' =>
 			[
-				310 => 'Pharmacy'
+				310 => 'Pharmacy',
+				311 => 'Health Care Facility',
+				312 => 'Skilled Nursing Facility',
+				313 => 'Assisted Living Facility'
 			],
             'Alabama' =>
             [
