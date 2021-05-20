@@ -304,9 +304,9 @@ class MY_Model extends CI_Model
 */
 	private function _result($where = [], $group)
 	{
-		print_r('hi');
+
 		static::_make_where($where);
-		print_r('bye');
+
 		$order = result::order() ?: static::_table().'.'.static::$updated;
 
 		$offset = result::offset();
@@ -320,12 +320,11 @@ class MY_Model extends CI_Model
 			$this->db->order_by($order, result::dir() ?: 'desc');
 		}
 
-		print_r($this->db->_compile_select());
+		//For debugging
+		//print_r($this->db->_compile_select());
 
 		if ($q = $this->db->get())
 		{
-			print_r($this->db->last_query());
-
 			$result = new static::$result($q->result(static::$record));
 
 			$result->next = $q->num_rows == $per_page ? $offset/$per_page + 2: false;
@@ -422,17 +421,12 @@ class MY_Model extends CI_Model
 	function _make_where($where)
 	{
 
-		print_r($where);
-
 		if ( ! $where) return;
 //var_dump($where);
 		$where = static::_antialias($where);
 
 		foreach($where as $field => $value)
 		{
-			print_r($field);
-			print_r($value);
-
 			if ($value === '') continue;
 
 			//turn value into a number if possible
