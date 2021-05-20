@@ -320,7 +320,7 @@ class MY_Model extends CI_Model
 			$this->db->order_by($order, result::dir() ?: 'desc');
 		}
 
-		print_r($this->db->get_compiled_select());
+		print_r($this->db->_compile_select());
 
 		if ($q = $this->db->get())
 		{
