@@ -304,7 +304,7 @@ class admin extends MY_Model
 						'attn_field' => $attn
 					];
 				} else {
-					return self::$bulk['alerts'][] = array_merge($data, ["Recipient has not approved this donor."]);
+					return self::$bulk['alerts'][] = array_merge(['donor', print_r($donor_ob, true), 'donee', print_r($donee_obj, true)], $data, ["Recipient has not approved this donor."]);
 				}
 			}
 	}
