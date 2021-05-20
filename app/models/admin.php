@@ -283,6 +283,7 @@ class admin extends MY_Model
 					return self::$bulk['alerts'][] = array_merge($data, ["Donor name doesn't match V1"]);
 				}
 				$donee_obj = org::search(['org.name' => $donee_name]);
+                print_r($donee_obj);
 				if(count($donee_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);
 				}
@@ -304,7 +305,7 @@ class admin extends MY_Model
 						'attn_field' => $attn
 					];
 				} else {
-					return self::$bulk['alerts'][] = array_merge(['donor', print_r($donor_obj, true), 'donee', print_r($donee_obj, true)], $data, ["Recipient has not approved this donor."]);
+					return self::$bulk['alerts'][] = array_merge(['donee_obj', print_r($donee_obj, true), 'donor_obj', print_r($donor_obj, true)], $data, ["Recipient has not approved this donor."]);
 				}
 			}
 	}
