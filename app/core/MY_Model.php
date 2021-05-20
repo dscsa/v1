@@ -321,6 +321,9 @@ class MY_Model extends CI_Model
 
 		if ($q = $this->db->get())
 		{
+
+			print_r($this->db->last_query());
+			
 			$result = new static::$result($q->result(static::$record));
 
 			$result->next = $q->num_rows == $per_page ? $offset/$per_page + 2: false;
