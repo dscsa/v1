@@ -321,7 +321,7 @@ class MY_Model extends CI_Model
 		}
 
 		//For debugging
-		print_r($this->db->_compile_select());
+		//print_r($this->db->_compile_select());
 
 		if ($q = $this->db->get())
 		{

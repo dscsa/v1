@@ -278,7 +278,7 @@ class admin extends MY_Model
 				$donor_name = str_replace("'","''",$donor_name);//need to escape single quotes so that the sql query can run
 				$donee_name = str_replace("'","''",$donee_name);//same
 
-				$donor_obj = org::search(["org.name LIKE '%$donor_name%'"]);
+				$donor_obj = org::search(["org.name LIKE '$donor_name'"]);
 				if(count($donor_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donor name doesn't match V1"]);
 				}
@@ -286,7 +286,7 @@ class admin extends MY_Model
 					return self::$bulk['alerts'][] = array_merge($data, ["Donor name has multiple matches"]);
 				}
 
-				$donee_obj = org::search(["org.name LIKE '%$donee_name%'"]);
+				$donee_obj = org::search(["org.name LIKE '$donee_name'"]);
 
 				if(count($donee_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);
