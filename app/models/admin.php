@@ -282,10 +282,16 @@ class admin extends MY_Model
 				if(count($donor_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donor name doesn't match V1"]);
 				}
+                if(count($donor_obj) > 1){
+					return self::$bulk['alerts'][] = array_merge($donor_obj, ["Donor name has multiple matches"]);
+				}
 				$donee_obj = org::search(['org.name' => $donee_name]);
-                print_r($donee_obj);
+                print_r($this->db->last_query());
 				if(count($donee_obj) == 0){
 					return self::$bulk['alerts'][] = array_merge($data, ["Donee name doesn't match V1"]);
+				}
+                if(count($donee_obj) > 1){
+					return self::$bulk['alerts'][] = array_merge($donee_obj, ["Donee name has multiple matches"]);
 				}
 				//require an attn field for bulk
 				if(strlen($attn) == 0){
@@ -305,7 +311,7 @@ class admin extends MY_Model
 						'attn_field' => $attn
 					];
 				} else {
-					return self::$bulk['alerts'][] = array_merge(['donee_obj', print_r($donee_obj, true), 'donor_obj', print_r($donor_obj, true)], $data, ["Recipient has not approved this donor."]);
+					return self::$bulk['alerts'][] = array_merge($data, ["Recipient has not approved this donor."]);
 				}
 			}
 	}
