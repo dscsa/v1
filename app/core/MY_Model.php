@@ -425,6 +425,9 @@ class MY_Model extends CI_Model
 
 		foreach($where as $field => $value)
 		{
+			print_r($field);
+			print_r($value);
+
 			if ($value === '') continue;
 
 			//turn value into a number if possible
