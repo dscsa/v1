@@ -31,7 +31,7 @@ class admin extends MY_Model
       'email' => $email_address,
       'message' => $email_body,
       'workHours' => false,
-      'from' => 'support@sirum.org',
+      'from' => 'hello@sirum.org',
       'subject' => $email_subject
     );
 
