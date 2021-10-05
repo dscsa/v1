@@ -131,7 +131,8 @@ class defaults
 				8	=> 'RCFE with 16 beds or more',
 				9	=> 'MHRC - mental health rehabilitation center',
 				10  => 'Pharmacy',
-				12  => 'Wholesaler'
+				12  => 'Wholesaler',
+				15  => 'Licensed Practitioner'
 			],
 
 			//'California' =>
@@ -182,19 +183,22 @@ class defaults
 				60 => 'Pharmacy',
 				61 => 'Wholesaler',
 				62 => 'Healthcare Facility',
-				63 => 'Government Entity'
+				63 => 'Government Entity',
+				65 => 'Licensed Practitioner'
 			],
 
 			'Florida' =>
 			[
 				70 => 'Pharmacy',
+				75 => 'Licensed Practitioner',
 				79 => 'Dept of Children and Families Licensee',
 				78 => 'Reverse Distributor'
 			],
 
 			'Iowa' =>
 			[
-				80 => 'General Pharmacy'
+				80 => 'General Pharmacy',
+				85 => 'Licensed Practitioner'
 			],
 			'Pennsylvania' =>
 			[
@@ -202,7 +206,8 @@ class defaults
 				91 => "Assisted Living Residence",
 				92 => 'Pharmacy',
 				93 => 'Wholesaler',
-				94 => 'Personal Care Home'
+				94 => 'Personal Care Home',
+				95 => 'Licensed Practitioner'
 			],
 			'Georgia' =>
 			[
@@ -215,177 +220,219 @@ class defaults
 			],
 			'Washington' =>
 			[
-				110 => 'Pharmacy'
+				110 => 'Pharmacy',
+				115 => 'Licensed Practitioner'
 			],
 			'Missouri' =>
 			[
-				120 => 'Pharmacy'
+				120 => 'Pharmacy',
+				125 => 'Licensed Practitioner'
 			],
 			'Indiana' =>
 			[
-				130 => 'Pharmacy'
+				130 => 'Pharmacy',
+				135 => 'Licensed Practitioner'
 			],
 			'Arizona' =>
 			[
 				140 => 'Pharmacy',
-				141 => 'Wholesaler'
+				141 => 'Wholesaler',
+				145 => 'Licensed Practitioner'
 			],
 			'Virginia' =>
 			[
-				150 => 'Pharmacy'
+				150 => 'Pharmacy',
+				155 => 'Licensed Practitioner'
 			],
 			'Texas' =>
 			[
 				160 => 'Pharmacy',
-				161 => 'Wholesaler'
+				161 => 'Wholesaler',
+				165 => 'Licensed Practitioner'
 			],
 			'Illinois' =>
 			[
-				170 => 'Pharmacy'
+				170 => 'Pharmacy',
+				175 => 'Licensed Practitioner'
 			],
 			'South Carolina' =>
 			[
-				180 => 'Pharmacy'
+				180 => 'Pharmacy',
+				185 => 'Licensed Practitioner'
 			],
 			'Maryland' =>
 			[
-				190 => 'Pharmacy'
+				190 => 'Pharmacy',
+				195 => 'Licensed Practitioner'
 			],
 			'Maine' =>
 			[
-				200 => 'Pharmacy'
+				200 => 'Pharmacy',
+				205 => 'Licensed Practitioner'
 			],
 			'Idaho' =>
 			[
-				210 => 'Pharmacy'
+				210 => 'Pharmacy',
+				215 => 'Licensed Practitioner'
 			],
 			'New Mexico' =>
 			[
-				220 => 'Pharmacy'
+				220 => 'Pharmacy',
+				225 => 'Licensed Practitioner'
 			],
 			'Nebreska' =>
 			[
-				230 => 'Pharmacy'
+				230 => 'Pharmacy',
+				235 => 'Licensed Practitioner'
 			],
 			'Tennessee' =>
 			[
 				240 => 'Pharmacy',
-				241 => 'Wholesaler'
+				241 => 'Wholesaler',
+				245 => 'Licensed Practitioner'
 			],
 			'Kentucky' =>
 			[
-				250 => 'Pharmacy'
+				250 => 'Pharmacy',
+				255 => 'Licensed Practitioner'
 			],
 			'Massachussets' =>
 			[
-				260 => 'Pharmacy'
+				260 => 'Pharmacy',
+				265 => 'Licensed Practitioner'
 			],
 			'Michigan' =>
 			[
-				270 => 'Pharmacy'
+				270 => 'Pharmacy',
+				275 => 'Licensed Practitioner'
 			],
 			'New York' =>
 			[
-				280 => 'Pharmacy'
+				280 => 'Pharmacy',
+				285 => 'Licensed Practitioner'
 			],
 			'North Carolina' =>
 			[
-				290 => 'Pharmacy'
+				290 => 'Pharmacy',
+				295 => 'Licensed Practitioner'
 			],
 			'Wyoming' =>
 			[
-				300 => 'Pharmacy'
+				300 => 'Pharmacy',
+				305 => 'Licensed Practitioner'
 			],
 			'Minnesota' =>
 			[
 				310 => 'Pharmacy',
 				311 => 'Health Care Facility',
 				312 => 'Skilled Nursing Facility',
-				313 => 'Assisted Living Facility'
+				313 => 'Assisted Living Facility',
+				315 => 'Licensed Practitioner'
 			],
             'Alabama' =>
             [
-				320 => 'Pharmacy'
+				320 => 'Pharmacy',
+				325 => 'Licensed Practitioner'
 			],
             'Alaska' =>
             [
-				330 => 'Pharmacy'
+				330 => 'Pharmacy',
+				335 => 'Licensed Practitioner'
 			],
             'Arkansas' =>
             [
-				340 => 'Pharmacy'
+				340 => 'Pharmacy',
+				345 => 'Licensed Practitioner'
 			],
             'Connecticut' =>
             [
-				350 => 'Pharmacy'
+				350 => 'Pharmacy',
+				355 => 'Licensed Practitioner'
 			],
             'Delaware' =>
             [
-				360 => 'Pharmacy'
+				360 => 'Pharmacy',
+				365 => 'Licensed Practitioner'
 			],
             'Hawaii' =>
             [
-				370 => 'Pharmacy'
+				370 => 'Pharmacy',
+				375 => 'Licensed Practitioner'
 			],
             'Kansas' =>
             [
-				380 => 'Pharmacy'
+				380 => 'Pharmacy',
+				385 => 'Licensed Practitioner'
 			],
             'Louisiana' =>
             [
-				390 => 'Pharmacy'
+				390 => 'Pharmacy',
+				395 => 'Licensed Practitioner'
 			],
             'Mississippi' =>
             [
-				400 => 'Pharmacy'
+				400 => 'Pharmacy',
+				405 => 'Licensed Practitioner'
 			],
             'Montana' =>
             [
-				410 => 'Pharmacy'
+				410 => 'Pharmacy',
+				415 => 'Licensed Practitioner'
 			],
             'Nevada' =>
             [
-				420 => 'Pharmacy'
+				420 => 'Pharmacy',
+				425 => 'Licensed Practitioner'
 			],
             'New Jersey' =>
             [
-				430 => 'Pharmacy'
+				430 => 'Pharmacy',
+				435 => 'Licensed Practitioner'
 			],
             'North Dakota' =>
             [
-				440 => 'Pharmacy'
+				440 => 'Pharmacy',
+				445 => 'Licensed Practitioner'
 			],
             'Oklahoma' =>
             [
-				450 => 'Pharmacy'
+				450 => 'Pharmacy',
+				455 => 'Licensed Practitioner'
 			],
             'Oregon' =>
             [
-				460 => 'Pharmacy'
+				460 => 'Pharmacy',
+				465 => 'Licensed Practitioner'
 			],
             'Rhode Island' =>
             [
-				470 => 'Pharmacy'
+				470 => 'Pharmacy',
+				475 => 'Licensed Practitioner'
 			],
             'South Dakota' =>
             [
-				480 => 'Pharmacy'
+				480 => 'Pharmacy',
+				485 => 'Licensed Practitioner'
 			],
             'Utah' =>
             [
-				490 => 'Pharmacy'
+				490 => 'Pharmacy',
+				495 => 'Licensed Practitioner'
 			],
             'Vermont' =>
             [
-				500 => 'Pharmacy'
+				500 => 'Pharmacy',
+				505 => 'Licensed Practitioner'
 			],
             'West Virginia' =>
             [
-				510 => 'Pharmacy'
+				510 => 'Pharmacy',
+				515 => 'Licensed Practitioner'
 			],
             'Wisconsin'  =>
             [
-				520 => 'Pharmacy'
+				520 => 'Pharmacy',
+				525 => 'Licensed Practitioner'
 			]
 		);
 
