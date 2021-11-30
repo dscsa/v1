@@ -176,7 +176,7 @@ class admin extends MY_Model
 
 			case 'production':
 				$from = [EMAIL, 'SIRUM'];
-				$bcc = 'archive@sirum.org, donations@sirum.org, adam@sirum.org, george@sirum.org, omar@sirum.org, '.EMAIL.( $email ? ', '.SALESFORCE : '');
+				$bcc = 'archive@sirum.org, donations@sirum.org, adam@sirum.org, george@sirum.org, '.EMAIL.( $email ? ', '.SALESFORCE : '');
 				break;
 		}
 
