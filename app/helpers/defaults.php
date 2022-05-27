@@ -500,6 +500,11 @@ class defaults
 				1062 => 'Nonprofit Clinic'
 			],
 
+			'Illinois' =>
+			[
+				1070 => 'Nonprofit Clinic'
+			],
+
 			'Iowa' =>
 			[
 				1081 => 'Wholesaler'
