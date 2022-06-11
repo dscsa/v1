@@ -100,6 +100,7 @@ class admin extends MY_Model
 		}
 
     $data = [
+      'calendar_id' => 'c_94dou5i0ough2u60gir3ua3fpg@group.calendar.google.com',
       'title' => "v1 $email_address $body[subject]",
       'body' => json_encode([$body]),
       'send_now' => true,  //because we're sending all the html of the email, it will get corrupted when saved to cal-event, so the webapp can send the html directly before saving the event - a little shortcut
@@ -225,7 +226,7 @@ class admin extends MY_Model
 
 			->send();
 
-      self::comm_cal_email("test comm_cal_email to:$email $subject", $message, 'adam@sirum.org', $attachments); //Testing without a specified email for now
+      self::comm_cal_email("v1 comm_cal_email to:$email $subject", $message, 'adam@sirum.org', $attachments); //Testing without a specified email for now
 	}
 
 /**
