@@ -324,16 +324,27 @@ class admin extends MY_Model
 		$this->output->enable_profiler(FALSE);
 		$this->db->save_queries = false;
 
-		$select = 'donor_org.name as donor_org, donee_org.name as donee_org, donor_org.state as donor_state, donee_org.state as donee_state, donor_org.license as donor_license, donation.*,
+		$select = "
+        donor_org.name as donor_org,
+        donee_org.name as donee_org,
+        donor_org.state as donor_state,
+        donee_org.state as donee_state,
+        donor_org.license as donor_license,
+        donation.*,
 		COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created) as date_status,
 		YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) as year_status,
 		MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) as month_status,
-		CEIL(MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created))/3) as quarter_status,';
+		CEIL(MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created))/3) as quarter_status,
+        ROUND(SUM(donation_items.donee_qty/COALESCE(item.qty_per_rx, 30))) as donated_rxs,
+        ROUND(SUM(COALESCE(donation_items.accepted_qty, donation_items.donee_qty*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(item.qty_per_rx, 30))) as accepted_rxs,
+        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(item.qty_per_rx, 30))) as dispensed_rxs,
+        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(item.qty_per_rx, 30)/COALESCE(donation_items.rxs_per_patient, 6.97))) as dispensed_patients,";
 
 		$from = "FROM donation
 		LEFT JOIN donation_items ON donation_items.donation_id = donation.id
 		LEFT JOIN org as donee_org ON donee_org.id = donation.donee_id
-		LEFT JOIN org as donor_org ON donor_org.id = donation.donor_id";
+		LEFT JOIN org as donor_org ON donor_org.id = donation.donor_id
+        LEFT JOIN item ON item.id = donation_items.item_id";
 
 		$date  = date(DB_DATE_FORMAT);
 
@@ -361,9 +372,6 @@ class admin extends MY_Model
 			item.mfg,
 			item.upc,
 			item.price as current_price';
-
-			$from .= "
-      LEFT JOIN item ON item.id = donation_items.item_id";
 
 			$group = ''; //'donation_items.id';
 			$year  = "AND YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) = '$items'";
