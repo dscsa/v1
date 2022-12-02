@@ -336,7 +336,9 @@ class admin extends MY_Model
 		MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) as month_status,
 		CEIL(MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created))/3) as quarter_status,
         ROUND(SUM(donation_items.donee_qty/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as donated_rxs,
+        ROUND(SUM(COALESCE(donation_items.accepted_qty, donation_items.donee_qty*COALESCE(donee_org.percent_accepted, 0.5)))) as accepted_qty,
         ROUND(SUM(COALESCE(donation_items.accepted_qty, donation_items.donee_qty*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as accepted_rxs,
+        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5)))) as dispensed_qty,
         ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as dispensed_rxs,
         ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30)/COALESCE(donation_items.rxs_per_patient, 6.97))) as dispensed_patients,";
 
