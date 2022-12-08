@@ -237,6 +237,9 @@ class defaults
 			[
 				140 => 'Pharmacy',
 				141 => 'Wholesaler',
+				142 => 'Assisted Living Community',
+				143 => 'Skilled Nursing Facility',
+				144 => 'Residential Treatment Facility',
 				145 => 'Licensed Practitioner'
 			],
 			'Virginia' =>

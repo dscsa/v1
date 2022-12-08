@@ -335,12 +335,12 @@ class admin extends MY_Model
 		YEAR(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) as year_status,
 		MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created)) as month_status,
 		CEIL(MONTH(COALESCE(donation.date_shipped, donation.date_received, donation.date_verified, donation.created))/3) as quarter_status,
-        ROUND(SUM(donation_items.donee_qty/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as donated_rxs,
-        ROUND(SUM(COALESCE(donation_items.accepted_qty, donation_items.donee_qty*COALESCE(donee_org.percent_accepted, 0.5)))) as accepted_qty,
-        ROUND(SUM(COALESCE(donation_items.accepted_qty, donation_items.donee_qty*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as accepted_rxs,
-        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5)))) as dispensed_qty,
-        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as dispensed_rxs,
-        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*COALESCE(donee_org.percent_dispensed, 0.5)*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30)/COALESCE(donation_items.rxs_per_patient, 6.97))) as dispensed_patients,";
+        ROUND(SUM(COALESCE(donation_items.donor_qty/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as donor_rxs,
+        ROUND(SUM(COALESCE(donation_items.accepted_qty, donation_items.donee_qty*(donation_items.archived = 0), donation_items.donor_qty*COALESCE(donee_org.percent_accepted, 0.5)))) as accepted_qty,
+        ROUND(SUM(COALESCE(donation_items.accepted_qty, donation_items.donee_qty*(donation_items.archived = 0), donation_items.donor_qty*COALESCE(donee_org.percent_accepted, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as accepted_rxs,
+        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*(donation_items.archived = 0)*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donor_qty*COALESCE(donee_org.percent_accepted, 0.5)*COALESCE(donee_org.percent_dispensed, 0.5)))) as dispensed_qty,
+        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*(donation_items.archived = 0)*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donor_qty*COALESCE(donee_org.percent_accepted, 0.5)*COALESCE(donee_org.percent_dispensed, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30))) as dispensed_rxs,
+        ROUND(SUM(COALESCE(donation_items.dispensed_qty, donation_items.accepted_qty*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donee_qty*(donation_items.archived = 0)*COALESCE(donee_org.percent_dispensed, 0.5), donation_items.donor_qty*COALESCE(donee_org.percent_accepted, 0.5)*COALESCE(donee_org.percent_dispensed, 0.5))/COALESCE(donation_items.qty_per_rx, item.qty_per_rx, 30)/COALESCE(donation_items.rxs_per_patient, 6.97))) as dispensed_patients,";
 
 		$from = "FROM donation
 		LEFT JOIN donation_items ON donation_items.donation_id = donation.id
@@ -355,7 +355,7 @@ class admin extends MY_Model
 			$select .= '
 			donation_items.donor_qty as donor_qty,
 			donation_items.donee_qty as donee_qty,
-			donation_items.donee_qty * (donation_items.archived = 0) as accepted_qty,
+			donation_items.donee_qty * (donation_items.archived = 0) as accepted_qty_old,
 
 			IF(donation_items.donor_qty is not null, 1, 0) as donor_count,
 			IF(donation_items.donee_qty is not null, 1, 0) as donee_count,
@@ -384,7 +384,7 @@ class admin extends MY_Model
 			$select .= '
 			IFNULL(SUM(donation_items.donor_qty), "") as donor_qty,
 			IFNULL(SUM(donation_items.donee_qty), "") as donee_qty,
-			IFNULL(SUM(donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_qty,
+			IFNULL(SUM(donation_items.donee_qty * (donation_items.archived = 0)), "") as accepted_qty_old,
 
 			SUM(IF(donation_items.donor_qty is not null, 1, 0)) as donor_count,
 			SUM(IF(donation_items.donee_qty is not null, 1, 0)) as donee_count,
