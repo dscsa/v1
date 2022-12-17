@@ -20,7 +20,7 @@
             <tr>
               <td style="padding:10px 0px 5px 15px; line-height: 20.0px; font-size: 15.0px;">Hi <?= $user; ?>,</td>
               <td align="right" style="width:181px; padding:10px 15px 5px 0px;">
-						<?= html::image('SIRUM_Logo.png', 'height:25px'); ?>
+						<?= html::image('SIRUM_Logo2.png', 'height:25px'); ?>
 				  </td>
             </tr>
             <tr>

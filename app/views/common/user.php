@@ -6,7 +6,7 @@
 
 <div class='container'>
 
-<strong class='logo'><img height='100' width='300' src='/images/SIRUM_Logo.png' alt='SIRUM' /></strong>
+<strong class='logo'><img height='100' width='300' src='/images/SIRUM_Logo2.png' alt='SIRUM' /></strong>
 
 <nav class='main_menu' data-selectname='Select a page'  role="navigation" itemscope="itemscope" itemtype="https://schema.org/SiteNavigationElement" >
 	<div class="avia-menu av-main-nav-wrap">
