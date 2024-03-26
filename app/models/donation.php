@@ -391,16 +391,14 @@ class donation extends MY_Model
 		$cutoff_start = "";
 		$cutoff_end = "";
 
-		if(($curr_hour == 10) OR ($curr_hour == 15) OR ($curr_hour == 21)){ //before noon, check old labels
-			$cutoff_start = date('Y-m-d H:i:s',strtotime('-5 year'));
-			$cutoff_end = date('Y-m-d H:i:s',strtotime('-3 year'));
-		} else if(($curr_hour == 8) OR ($curr_hour == 12) OR ($curr_hour == 16) OR ($curr_hour == 20) OR ($curr_hour == 22)) {
-			$cutoff_start = date('Y-m-d H:i:s',strtotime('-3 year'));
-			$cutoff_end = date('Y-m-d H:i:s',strtotime('-1 year'));
-		} else {
-			$cutoff_start = date('Y-m-d H:i:s',strtotime('-1 year'));
-			$cutoff_end = date('Y-m-d H:i:s');
-		}
+        // Check only older labels during some hours
+        if (in_array($curr_hour, [8, 10, 12, 15, 16, 20, 21, 22])) {
+            $cutoff_start = date('Y-m-d H:i:s',strtotime('-18 month'));
+            $cutoff_end = date('Y-m-d H:i:s',strtotime('-1 year'));
+        } else {
+            $cutoff_start = date('Y-m-d H:i:s',strtotime('-1 year'));
+            $cutoff_end = date('Y-m-d H:i:s');
+        }
 
 		$all_recipients = self::_getAllRecipients();
 		$high_priority_ids = self::_getStateRecipientsString('CA,CO', $all_recipients); //high priority
