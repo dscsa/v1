@@ -45,14 +45,6 @@ class Bkg_controller extends MY_Controller
 */
 	function _cron()
 	{
-		//Typically run at the beginning of every hour
-		//but can change this within crontab on server
-		$hour = intval(gmdate('H'));
-		if(($hour < 6) || ($hour > 9)){ //do not check during 6am-9am GMT (9pm-3am PT, 12am-6am ET)
-			log::info('CRON - Track');
-			bkg::donation('track');
-		}
-
 		// Run daily at 3am GMT / 7pm PT / 4pm ET. Fedex
 		// pickups should have happened & can be rescheduled
 		if($daily = gmdate('H') == '03')
