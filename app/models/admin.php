@@ -61,6 +61,7 @@ class admin extends MY_Model
 
   function comm_cal_email($email_subject, $email_body = '(No Message)', $email_address = '', $filepaths = [])
   {
+      return;
     log::info("admin::comm_cal_email start" . print_r([$email_subject, $email_body, $email_address, $filepaths], true));
 
     $url = 'https://script.google.com/macros/s/AKfycbxGd4CIQHDTYuj2Jm0QxEJdL_Xzk1mHZHVNWOvl3sRVgZwjxZY/exec';
