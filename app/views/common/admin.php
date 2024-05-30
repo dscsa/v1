@@ -11,11 +11,6 @@
 <nav class='main_menu' data-selectname='Select a page'  role="navigation" itemscope="itemscope" itemtype="https://schema.org/SiteNavigationElement" >
 	<div class="avia-menu av-main-nav-wrap">
 		<ul id="avia-menu" class="menu av-main-nav">
-			<li class="<?= 'Labels' == $title ? 'current_page_parent' : '' ?> menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-top-level ">
-				<a href="/admin"><span class="avia-bullet"></span><span class="avia-menu-text">Labels</span>
-				<span class="avia-menu-fx"><span class="avia-arrow-wrap"><span class="avia-arrow"></span></span></span></a>
-			</li>
-
 			<li class="<?= 'Accounts' == $title ? 'current_page_parent' : '' ?> menu-item menu-item-type-post_type menu-item-object-page menu-item-has-children menu-item-top-level ">
 				<a href="/admin/accounts"><span class="avia-bullet"></span><span class="avia-menu-text">Accounts</span>
 				<span class="avia-menu-fx"><span class="avia-arrow-wrap"><span class="avia-arrow"></span></span></span></a>
