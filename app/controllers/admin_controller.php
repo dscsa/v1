@@ -35,6 +35,7 @@ class Admin_controller extends MY_Controller
 
     function index()
     {
+        user::login($org_id, 'admin');
         // Now that we've disabled label creation, we want to just redirect to the accounts page
         to::url("admin/accounts");
     }
