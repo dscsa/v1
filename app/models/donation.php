@@ -377,7 +377,8 @@ class donation extends MY_Model
 */
 	function track()
 	{
-
+        log::error("Fedex track is attempting to run but it shouldn't be");
+        return;
 		//Hack to temporarily suspend per page limit
 		//$per_page = result::$per_page;
 
@@ -467,6 +468,7 @@ class donation extends MY_Model
 			unset($track['success']['address']);//remoce rhe address property from track, otherwise _update will bug out
 
 			$email = [$donation->donor_org, $donation->donation_id, $donation->tracking_number];
+
 
 			//Skip if there was an error
 			if($track['error'])
